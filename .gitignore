@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Temp files
+*.log
+*.tmp
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Data (keep structure, ignore content)
+backend/src/data/releves.json
+
+# Test files
+backend/test-parse.ts
+
+# OS files
+nul
+Thumbs.db
