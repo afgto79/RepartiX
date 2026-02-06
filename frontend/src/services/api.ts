@@ -119,5 +119,11 @@ export const api = {
     }
 
     return res.json();
+  },
+
+  async shutdown(): Promise<void> {
+    await fetch(`${API_BASE}/shutdown`, {
+      method: 'POST'
+    });
   }
 };

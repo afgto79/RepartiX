@@ -30,17 +30,20 @@ function analyserMois(moisKey: string, decades: Releve[]): AnalyseRemise {
   // Somme des NET HT des decades presentes
   const totalHTMensuel = decades.reduce((sum, d) => sum + d.totalNetHT, 0);
 
-  // Remise attendue = 3% du total HT
+  // Remise attendue = 3% du total HT (valeur positive)
   const remiseAttendue = totalHTMensuel * 0.03;
 
-  // Remise reelle = valeur sur la decade 3
+  // Remise reelle = valeur absolue de la remise sur decade 3
+  // (stockee en negatif dans le PDF, ex: -551.99 signifie 551.99 de remise)
   const decade3 = decades.find(d => d.decade === 3);
-  const remiseReelle = decade3?.remiseAbnMargeHT ?? 0;
+  const remiseReelleBrute = decade3?.remiseAbnMargeHT ?? 0;
+  const remiseReelle = Math.abs(remiseReelleBrute);
 
-  // Delta (negatif = on nous doit de l'argent)
+  // Delta = remise recue - remise attendue
+  // Negatif = manque a gagner, Positif = bonus
   const delta = remiseReelle - remiseAttendue;
   const deltaPourcent = remiseAttendue !== 0
-    ? (delta / Math.abs(remiseAttendue)) * 100
+    ? (delta / remiseAttendue) * 100
     : 0;
 
   // Determination du statut

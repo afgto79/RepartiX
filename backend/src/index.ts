@@ -37,6 +37,18 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Arret du serveur
+app.post('/api/shutdown', (_req, res) => {
+  console.log('[Server] Arret demande...');
+  res.json({ status: 'shutting_down' });
+
+  // Delai pour laisser la reponse partir
+  setTimeout(() => {
+    console.log('[Server] Arret en cours...');
+    process.exit(0);
+  }, 500);
+});
+
 // Demarrage
 app.listen(PORT, () => {
   console.log(`Backend demarre sur http://127.0.0.1:${PORT}`);
