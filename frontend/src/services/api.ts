@@ -58,6 +58,22 @@ export interface ScanResponse {
   errors: { file: string; error: string }[];
 }
 
+export interface CumulResponse {
+  deltaCumulTotal: number;
+  regulTotal: number;
+  resteDu: number;
+  parAnnee: { annee: number; delta: number; regul: number; resteDu: number }[];
+}
+
+export interface Regularisation {
+  id: string;
+  date: string;
+  montant: number;
+  annee: number;
+  description: string;
+  createdAt: string;
+}
+
 export const api = {
   async uploadPDFs(files: File[]): Promise<UploadResponse> {
     const formData = new FormData();
@@ -125,5 +141,49 @@ export const api = {
     await fetch(`${API_BASE}/shutdown`, {
       method: 'POST'
     });
+  },
+
+  async getCumul(): Promise<CumulResponse> {
+    const res = await fetch(`${API_BASE}/stats/cumul`);
+
+    if (!res.ok) {
+      throw new Error('Erreur chargement cumul');
+    }
+
+    return res.json();
+  },
+
+  async getRegularisations(annee?: number): Promise<Regularisation[]> {
+    const url = annee ? `${API_BASE}/regularisations?annee=${annee}` : `${API_BASE}/regularisations`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Erreur chargement regularisations');
+    return res.json();
+  },
+
+  async addRegularisation(data: { date: string; montant: number; annee: number; description: string }): Promise<Regularisation> {
+    const res = await fetch(`${API_BASE}/regularisations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur creation regularisation');
+    return res.json();
+  },
+
+  async updateRegularisation(id: string, data: { date?: string; montant?: number; annee?: number; description?: string }): Promise<Regularisation> {
+    const res = await fetch(`${API_BASE}/regularisations/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur modification regularisation');
+    return res.json();
+  },
+
+  async deleteRegularisation(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/regularisations/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Erreur suppression regularisation');
   }
 };

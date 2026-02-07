@@ -3,6 +3,7 @@ import cors from 'cors';
 import { uploadRouter } from './routes/upload';
 import { relevesRouter } from './routes/releves';
 import { statsRouter } from './routes/stats';
+import { regularisationsRouter } from './routes/regularisations';
 import { scanFolder } from './services/fileWatcher';
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/upload', uploadRouter);
 app.use('/api/releves', relevesRouter);
 app.use('/api/stats', statsRouter);
+app.use('/api/regularisations', regularisationsRouter);
 
 // Scan dossier reseau
 app.post('/api/scan-folder', async (req, res) => {
@@ -50,6 +52,6 @@ app.post('/api/shutdown', (_req, res) => {
 });
 
 // Demarrage
-app.listen(PORT, () => {
+app.listen(PORT, '127.0.0.1', () => {
   console.log(`Backend demarre sur http://127.0.0.1:${PORT}`);
 });

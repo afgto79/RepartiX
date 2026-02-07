@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Card, Table, TableHead, TableRow, TableHeaderCell, TableBody, TableCell, Badge } from '@tremor/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { api, AnalyseRemise } from '../services/api';
+import { api, AnalyseRemise, CumulResponse, Regularisation } from '../services/api';
 import { formatEuros, formatMoisLabel } from '../utils/formatters';
+import { Regularisations } from './Regularisations';
 
 interface DashboardProps {
   onNavigateToMois: (annee: number, mois: number) => void;
@@ -11,12 +12,19 @@ interface DashboardProps {
 export function Dashboard({ onNavigateToMois }: DashboardProps) {
   const [annee, setAnnee] = useState(new Date().getFullYear());
   const [data, setData] = useState<AnalyseRemise[]>([]);
+  const [cumul, setCumul] = useState<CumulResponse | null>(null);
+  const [regularisations, setRegularisations] = useState<Regularisation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
   }, [annee]);
+
+  useEffect(() => {
+    loadCumul();
+    loadRegularisations();
+  }, []);
 
   async function loadData() {
     setLoading(true);
@@ -31,6 +39,40 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
       setLoading(false);
     }
   }
+
+  async function loadCumul() {
+    try {
+      const result = await api.getCumul();
+      setCumul(result);
+    } catch (err) {
+      console.error('Erreur chargement cumul:', err);
+    }
+  }
+
+  async function loadRegularisations() {
+    try {
+      const result = await api.getRegularisations();
+      setRegularisations(result);
+    } catch (err) {
+      console.error('Erreur chargement regularisations:', err);
+    }
+  }
+
+  function handleRegulUpdate() {
+    loadCumul();
+    loadRegularisations();
+  }
+
+  // Delta annuel (somme des mois complets)
+  const deltaAnnuel = data
+    .filter(d => d.decadesPresentes.length === 3)
+    .reduce((sum, d) => sum + d.delta, 0);
+
+  // Regularisations de l'annee selectionnee
+  const regulAnnuel = regularisations
+    .filter(r => r.annee === annee)
+    .reduce((sum, r) => sum + r.montant, 0);
+  const resteAnnuel = deltaAnnuel + regulAnnuel;
 
   function getStatutBadge(statut: string) {
     switch (statut) {
@@ -94,6 +136,49 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
         </Card>
       )}
 
+      {/* Bandeau retard cumule toutes annees */}
+      {cumul && (
+        <Card className="mb-4 p-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Retard cumule (toutes annees)</p>
+              <p className={`text-2xl font-bold ${cumul.resteDu < -0.01 ? 'text-red-600' : 'text-green-600'}`}>
+                {formatEuros(cumul.resteDu)}
+              </p>
+              <div className="flex gap-3 mt-1 text-xs">
+                <span className="text-gray-500">Brut: <span className="text-red-600">{formatEuros(cumul.deltaCumulTotal)}</span></span>
+                {cumul.regulTotal > 0 && (
+                  <span className="text-gray-500">Regul: <span className="text-green-600">+{formatEuros(cumul.regulTotal)}</span></span>
+                )}
+              </div>
+            </div>
+            <div className="flex-1 mx-6">
+              {cumul.deltaCumulTotal < 0 && (
+                <div>
+                  <div className="h-3 bg-red-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full"
+                      style={{ width: `${Math.min(100, (cumul.regulTotal / Math.abs(cumul.deltaCumulTotal)) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1 text-center">
+                    {Math.round((cumul.regulTotal / Math.abs(cumul.deltaCumulTotal)) * 100)}% rattrape
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="text-right text-xs text-gray-500">
+              {cumul.parAnnee.map(a => (
+                <div key={a.annee} className="mb-0.5">
+                  {a.annee}: <span className={a.resteDu < -0.01 ? 'text-red-600' : 'text-green-600'}>{formatEuros(a.resteDu)}</span>
+                  {a.regul > 0 && <span className="text-green-600 ml-1">(+{formatEuros(a.regul)})</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {data.length === 0 ? (
         <Card>
           <p className="text-gray-500 text-center py-8">
@@ -102,28 +187,89 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
         </Card>
       ) : (
         <>
-          {/* Graphique delta */}
-          <Card className="mb-4">
-            <h2 className="text-sm font-semibold mb-2">Evolution du delta mensuel</h2>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mois" />
-                <YAxis tickFormatter={(v: number) => `${v.toFixed(0)} EUR`} />
-                <Tooltip
-                  formatter={(value: number) => formatEuros(value)}
-                  labelFormatter={(label: string) => `Mois: ${label}`}
-                />
-                <ReferenceLine y={0} stroke="#666" />
-                <Bar
-                  dataKey="delta"
-                  fill="#ef4444"
-                  name="Delta"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
+          {/* Zone graphique + retard annuel */}
+          <div className="flex gap-4 mb-4">
+            {/* Graphique delta (75%) */}
+            <Card className="flex-1">
+              <h2 className="text-sm font-semibold mb-2">Evolution du delta mensuel</h2>
+              {chartData.length <= 12 ? (
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mois" />
+                    <YAxis tickFormatter={(v: number) => `${v.toFixed(0)} EUR`} />
+                    <Tooltip
+                      formatter={(value: number) => formatEuros(value)}
+                      labelFormatter={(label: string) => `Mois: ${label}`}
+                    />
+                    <ReferenceLine y={0} stroke="#666" />
+                    <Bar
+                      dataKey="delta"
+                      fill="#ef4444"
+                      name="Delta"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="overflow-x-auto">
+                  <div style={{ width: `${chartData.length * 60}px`, minWidth: '100%' }}>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="mois" />
+                        <YAxis tickFormatter={(v: number) => `${v.toFixed(0)} EUR`} />
+                        <Tooltip
+                          formatter={(value: number) => formatEuros(value)}
+                          labelFormatter={(label: string) => `Mois: ${label}`}
+                        />
+                        <ReferenceLine y={0} stroke="#666" />
+                        <Bar
+                          dataKey="delta"
+                          fill="#ef4444"
+                          name="Delta"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Retard annuel (25%) */}
+            <Card className="w-52 flex flex-col justify-center items-center text-center">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Retard {annee}</p>
+              <p className={`text-2xl font-bold ${resteAnnuel < -0.01 ? 'text-red-600' : 'text-green-600'}`}>
+                {formatEuros(resteAnnuel)}
+              </p>
+              <div className="text-xs mt-1 space-y-0.5">
+                <p className="text-gray-500">Brut: <span className="text-red-600">{formatEuros(deltaAnnuel)}</span></p>
+                {regulAnnuel > 0 && (
+                  <p className="text-gray-500">Regul: <span className="text-green-600">+{formatEuros(regulAnnuel)}</span></p>
+                )}
+              </div>
+              {deltaAnnuel < 0 && (
+                <div className="w-full mt-2">
+                  <div className="h-2 bg-red-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full"
+                      style={{ width: `${Math.min(100, (regulAnnuel / Math.abs(deltaAnnuel)) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {Math.round((regulAnnuel / Math.abs(deltaAnnuel)) * 100)}% rattrape
+                  </p>
+                </div>
+              )}
+              <p className="text-xs text-gray-400 mt-1">
+                {data.filter(d => d.decadesPresentes.length === 3).length} mois complets
+              </p>
+            </Card>
+          </div>
+
+          {/* Regularisations */}
+          <Regularisations regularisations={regularisations} onUpdate={handleRegulUpdate} />
 
           {/* Tableau mensuel */}
           <Card className="p-0 overflow-hidden">

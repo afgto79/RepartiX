@@ -2,17 +2,23 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { Releve, DataStore } from '../types/releve';
+import { Releve, Regularisation, DataStore } from '../types/releve';
 
 const DATA_FILE = path.join(__dirname, '../data/releves.json');
 
 export async function loadData(): Promise<DataStore> {
   try {
     const content = await fs.readFile(DATA_FILE, 'utf-8');
-    return JSON.parse(content);
+    const data = JSON.parse(content);
+    // Migration: ajouter regularisations si absent
+    if (!data.regularisations) {
+      data.regularisations = [];
+    }
+    return data;
   } catch {
     const emptyData: DataStore = {
       releves: [],
+      regularisations: [],
       metadata: {
         lastUpdated: new Date().toISOString(),
         totalReleves: 0
@@ -90,6 +96,48 @@ export async function getFileHash(filePath: string): Promise<string> {
 export async function isDuplicate(hash: string): Promise<boolean> {
   const data = await loadData();
   return data.releves.some(r => r.hash === hash);
+}
+
+// --- Regularisations CRUD ---
+
+export async function getRegularisations(annee?: number): Promise<Regularisation[]> {
+  const data = await loadData();
+  if (annee) {
+    return data.regularisations.filter(r => r.annee === annee);
+  }
+  return data.regularisations;
+}
+
+export async function addRegularisation(regul: Omit<Regularisation, 'id' | 'createdAt'>): Promise<Regularisation> {
+  const data = await loadData();
+  const newRegul: Regularisation = {
+    id: uuidv4(),
+    ...regul,
+    createdAt: new Date().toISOString()
+  };
+  data.regularisations.push(newRegul);
+  await saveData(data);
+  return newRegul;
+}
+
+export async function updateRegularisation(id: string, updates: Partial<Omit<Regularisation, 'id' | 'createdAt'>>): Promise<Regularisation | null> {
+  const data = await loadData();
+  const index = data.regularisations.findIndex(r => r.id === id);
+  if (index === -1) return null;
+  data.regularisations[index] = { ...data.regularisations[index], ...updates };
+  await saveData(data);
+  return data.regularisations[index];
+}
+
+export async function deleteRegularisation(id: string): Promise<boolean> {
+  const data = await loadData();
+  const initialLength = data.regularisations.length;
+  data.regularisations = data.regularisations.filter(r => r.id !== id);
+  if (data.regularisations.length < initialLength) {
+    await saveData(data);
+    return true;
+  }
+  return false;
 }
 
 export async function deleteReleve(id: string): Promise<boolean> {

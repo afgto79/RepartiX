@@ -27,8 +27,18 @@ export interface AnalyseRemise {
   decadesPresentes: number[];
 }
 
+export interface Regularisation {
+  id: string;
+  date: string;       // YYYY-MM-DD
+  montant: number;     // positif = versement recu
+  annee: number;       // annee concernee
+  description: string; // ex: "Avoir n°12345"
+  createdAt: string;
+}
+
 export interface DataStore {
   releves: Releve[];
+  regularisations: Regularisation[];
   metadata: {
     lastUpdated: string;
     totalReleves: number;
