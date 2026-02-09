@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Dashboard } from './components/Dashboard';
+import { DashboardPanorama } from './components/DashboardPanorama';
+import { DashboardChronos } from './components/DashboardChronos';
 import { MoisDetail } from './components/MoisDetail';
 import { UploadZone } from './components/UploadZone';
 import { api } from './services/api';
 
-type Page = 'dashboard' | 'upload' | 'detail';
+type Page = 'dashboard' | 'panorama' | 'chronos' | 'upload' | 'detail';
 
 interface DetailState {
   annee: number;
@@ -84,6 +86,26 @@ function App() {
                 Dashboard
               </button>
               <button
+                onClick={() => setPage('panorama')}
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                  page === 'panorama'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Panorama
+              </button>
+              <button
+                onClick={() => setPage('chronos')}
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                  page === 'chronos'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Chronos
+              </button>
+              <button
                 onClick={() => setPage('upload')}
                 className={`px-4 py-2 text-sm rounded-lg transition-colors ${
                   page === 'upload'
@@ -108,6 +130,14 @@ function App() {
       {/* Contenu */}
       {page === 'dashboard' && (
         <Dashboard onNavigateToMois={navigateToMois} />
+      )}
+
+      {page === 'panorama' && (
+        <DashboardPanorama onNavigateToMois={navigateToMois} />
+      )}
+
+      {page === 'chronos' && (
+        <DashboardChronos onNavigateToMois={navigateToMois} />
       )}
 
       {page === 'detail' && detail && (
