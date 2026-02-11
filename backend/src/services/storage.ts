@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { Releve, Regularisation, DataStore } from '../types/releve';
+import { Releve, Regularisation, Reclamation, DataStore } from '../types/releve';
 
 const DATA_FILE = path.join(__dirname, '../data/releves.json');
 
@@ -14,11 +14,16 @@ export async function loadData(): Promise<DataStore> {
     if (!data.regularisations) {
       data.regularisations = [];
     }
+    // Migration: ajouter reclamations si absent
+    if (!data.reclamations) {
+      data.reclamations = [];
+    }
     return data;
   } catch {
     const emptyData: DataStore = {
       releves: [],
       regularisations: [],
+      reclamations: [],
       metadata: {
         lastUpdated: new Date().toISOString(),
         totalReleves: 0
@@ -146,6 +151,62 @@ export async function deleteReleve(id: string): Promise<boolean> {
   data.releves = data.releves.filter(r => r.id !== id);
 
   if (data.releves.length < initialLength) {
+    await saveData(data);
+    return true;
+  }
+  return false;
+}
+
+// --- Reclamations CRUD ---
+
+function generateReference(reclamations: Reclamation[], dateCreation: string): string {
+  const year = new Date(dateCreation).getFullYear();
+  const sameYear = reclamations.filter(r => r.reference.startsWith(`#${year}-`));
+  const nextNum = sameYear.length + 1;
+  return `#${year}-${String(nextNum).padStart(3, '0')}`;
+}
+
+export async function getReclamations(statut?: string): Promise<Reclamation[]> {
+  const data = await loadData();
+  if (statut) {
+    return data.reclamations.filter(r => r.statut === statut);
+  }
+  return data.reclamations;
+}
+
+export async function addReclamation(reclam: Omit<Reclamation, 'id' | 'reference' | 'createdAt'>): Promise<Reclamation> {
+  const data = await loadData();
+  const newReclam: Reclamation = {
+    id: uuidv4(),
+    reference: generateReference(data.reclamations, reclam.dateCreation),
+    ...reclam,
+    createdAt: new Date().toISOString()
+  };
+  data.reclamations.push(newReclam);
+  await saveData(data);
+  return newReclam;
+}
+
+export async function updateReclamation(id: string, updates: Partial<Omit<Reclamation, 'id' | 'reference' | 'createdAt'>>): Promise<Reclamation | null> {
+  const data = await loadData();
+  const index = data.reclamations.findIndex(r => r.id === id);
+  if (index === -1) return null;
+  data.reclamations[index] = { ...data.reclamations[index], ...updates };
+  await saveData(data);
+  return data.reclamations[index];
+}
+
+export async function deleteReclamation(id: string): Promise<boolean> {
+  const data = await loadData();
+  const initialLength = data.reclamations.length;
+  data.reclamations = data.reclamations.filter(r => r.id !== id);
+  if (data.reclamations.length < initialLength) {
+    // Delier les regularisations associees
+    for (const reg of data.regularisations) {
+      if (reg.reclamationId === id) {
+        delete reg.reclamationId;
+      }
+    }
     await saveData(data);
     return true;
   }

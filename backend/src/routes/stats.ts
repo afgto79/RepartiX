@@ -80,4 +80,19 @@ router.get('/cumul', async (_req, res) => {
   }
 });
 
+// GET /api/stats/annees - Annees disponibles dans les donnees
+router.get('/annees', async (_req, res) => {
+  try {
+    const releves = await getReleves();
+    const anneesSet = new Set(releves.map(r => r.annee));
+    // Toujours inclure l'annee en cours
+    anneesSet.add(new Date().getFullYear());
+    const annees = [...anneesSet].sort((a, b) => a - b);
+    res.json({ annees });
+  } catch (err) {
+    console.error('[Stats] Erreur annees:', err);
+    res.status(500).json({ error: 'Erreur lors de la recuperation des annees' });
+  }
+});
+
 export { router as statsRouter };

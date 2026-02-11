@@ -33,12 +33,26 @@ export interface Regularisation {
   montant: number;     // positif = versement recu
   annee: number;       // annee concernee
   description: string; // ex: "Avoir n°12345"
+  reclamationId?: string; // lien optionnel vers une reclamation
+  createdAt: string;
+}
+
+export interface Reclamation {
+  id: string;
+  reference: string;      // auto-genere "#YYYY-NNN"
+  moisDebut: string;      // "YYYY-MM"
+  moisFin: string;        // "YYYY-MM"
+  dateCreation: string;   // YYYY-MM-DD
+  statut: 'en_cours' | 'en_attente' | 'soldee';
+  montantReclame: number;
+  description: string;
   createdAt: string;
 }
 
 export interface DataStore {
   releves: Releve[];
   regularisations: Regularisation[];
+  reclamations: Reclamation[];
   metadata: {
     lastUpdated: string;
     totalReleves: number;

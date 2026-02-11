@@ -11,10 +11,11 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
   const [data, setData] = useState<AnalyseRemise[]>([]);
   const [cumul, setCumul] = useState<CumulResponse | null>(null);
   const [regularisations, setRegularisations] = useState<Regularisation[]>([]);
+  const [years, setYears] = useState<number[]>([new Date().getFullYear()]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadData(); }, [annee]);
-  useEffect(() => { loadCumul(); loadRegularisations(); }, []);
+  useEffect(() => { loadCumul(); loadRegularisations(); loadAnnees(); }, []);
 
   async function loadData() {
     setLoading(true);
@@ -34,6 +35,10 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
 
   async function loadRegularisations() {
     try { setRegularisations(await api.getRegularisations()); } catch (err) { console.error(err); }
+  }
+
+  async function loadAnnees() {
+    try { setYears(await api.getAnnees()); } catch (err) { console.error(err); }
   }
 
   function handleRowClick(moisKey: string) {
@@ -68,9 +73,6 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
   });
 
   const MOIS_SHORT = ['', 'JAN', 'FEV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOUT', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   if (loading) {
     return <div className="p-8 max-w-7xl mx-auto"><p className="text-gray-500">Chargement...</p></div>;

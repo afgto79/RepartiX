@@ -71,6 +71,19 @@ export interface Regularisation {
   montant: number;
   annee: number;
   description: string;
+  reclamationId?: string;
+  createdAt: string;
+}
+
+export interface Reclamation {
+  id: string;
+  reference: string;
+  moisDebut: string;
+  moisFin: string;
+  dateCreation: string;
+  statut: 'en_cours' | 'en_attente' | 'soldee';
+  montantReclame: number;
+  description: string;
   createdAt: string;
 }
 
@@ -143,6 +156,13 @@ export const api = {
     });
   },
 
+  async getAnnees(): Promise<number[]> {
+    const res = await fetch(`${API_BASE}/stats/annees`);
+    if (!res.ok) throw new Error('Erreur chargement annees');
+    const data = await res.json();
+    return data.annees;
+  },
+
   async getCumul(): Promise<CumulResponse> {
     const res = await fetch(`${API_BASE}/stats/cumul`);
 
@@ -185,5 +205,47 @@ export const api = {
       method: 'DELETE'
     });
     if (!res.ok) throw new Error('Erreur suppression regularisation');
+  },
+
+  // --- Reclamations ---
+
+  async getReclamations(statut?: string): Promise<Reclamation[]> {
+    const url = statut ? `${API_BASE}/reclamations?statut=${statut}` : `${API_BASE}/reclamations`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Erreur chargement reclamations');
+    return res.json();
+  },
+
+  async addReclamation(data: {
+    moisDebut: string; moisFin: string; dateCreation: string;
+    statut: string; montantReclame: number; description: string;
+  }): Promise<Reclamation> {
+    const res = await fetch(`${API_BASE}/reclamations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur creation reclamation');
+    return res.json();
+  },
+
+  async updateReclamation(id: string, data: Partial<{
+    moisDebut: string; moisFin: string; dateCreation: string;
+    statut: string; montantReclame: number; description: string;
+  }>): Promise<Reclamation> {
+    const res = await fetch(`${API_BASE}/reclamations/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur modification reclamation');
+    return res.json();
+  },
+
+  async deleteReclamation(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/reclamations/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Erreur suppression reclamation');
   }
 };

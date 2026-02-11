@@ -14,6 +14,7 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
   const [data, setData] = useState<AnalyseRemise[]>([]);
   const [cumul, setCumul] = useState<CumulResponse | null>(null);
   const [regularisations, setRegularisations] = useState<Regularisation[]>([]);
+  const [years, setYears] = useState<number[]>([new Date().getFullYear()]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +25,7 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
   useEffect(() => {
     loadCumul();
     loadRegularisations();
+    loadAnnees();
   }, []);
 
   async function loadData() {
@@ -56,6 +58,10 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
     } catch (err) {
       console.error('Erreur chargement regularisations:', err);
     }
+  }
+
+  async function loadAnnees() {
+    try { setYears(await api.getAnnees()); } catch (err) { console.error(err); }
   }
 
   function handleRegulUpdate() {
@@ -99,9 +105,7 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
     remiseReelle: Math.abs(d.remiseReelle)
   }));
 
-  // Annees disponibles pour le filtre
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+  // Annees disponibles pour le filtre (chargees depuis le backend)
 
   if (loading) {
     return (

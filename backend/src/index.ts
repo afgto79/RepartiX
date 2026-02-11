@@ -4,6 +4,7 @@ import { uploadRouter } from './routes/upload';
 import { relevesRouter } from './routes/releves';
 import { statsRouter } from './routes/stats';
 import { regularisationsRouter } from './routes/regularisations';
+import { reclamationsRouter } from './routes/reclamations';
 import { scanFolder } from './services/fileWatcher';
 
 const app = express();
@@ -18,6 +19,7 @@ app.use('/api/upload', uploadRouter);
 app.use('/api/releves', relevesRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/regularisations', regularisationsRouter);
+app.use('/api/reclamations', reclamationsRouter);
 
 // Scan dossier reseau
 app.post('/api/scan-folder', async (req, res) => {

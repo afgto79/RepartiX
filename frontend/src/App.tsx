@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { DashboardPanorama } from './components/DashboardPanorama';
 import { DashboardChronos } from './components/DashboardChronos';
+import { DashboardBilan } from './components/DashboardBilan';
 import { MoisDetail } from './components/MoisDetail';
 import { UploadZone } from './components/UploadZone';
 import { api } from './services/api';
 
-type Page = 'dashboard' | 'panorama' | 'chronos' | 'upload' | 'detail';
+type Page = 'dashboard' | 'panorama' | 'chronos' | 'bilan' | 'upload' | 'detail';
 
 interface DetailState {
   annee: number;
@@ -106,6 +107,16 @@ function App() {
                 Chronos
               </button>
               <button
+                onClick={() => setPage('bilan')}
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                  page === 'bilan'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Bilan
+              </button>
+              <button
                 onClick={() => setPage('upload')}
                 className={`px-4 py-2 text-sm rounded-lg transition-colors ${
                   page === 'upload'
@@ -138,6 +149,10 @@ function App() {
 
       {page === 'chronos' && (
         <DashboardChronos onNavigateToMois={navigateToMois} />
+      )}
+
+      {page === 'bilan' && (
+        <DashboardBilan />
       )}
 
       {page === 'detail' && detail && (
