@@ -48,11 +48,8 @@ export function AppLayout({ page, onNavigate, onShutdown, pageTitle, headerRight
       <aside className="w-52 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
         {/* Brand */}
         <div className="px-5 py-5 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-blue-700 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">R</div>
-            <span className="font-bold text-slate-800 text-sm tracking-tight">RepartiX</span>
-          </div>
-          <p className="text-[10px] text-slate-400 mt-1 ml-9">Alliance Healthcare</p>
+          <p className="text-xl font-bold tracking-tight" style={{ color: '#6B2D8B' }}>cencora</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Alliance Healthcare</p>
         </div>
 
         {/* Navigation */}
@@ -63,11 +60,12 @@ export function AppLayout({ page, onNavigate, onShutdown, pageTitle, headerRight
               onClick={() => onNavigate(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
                 page === item.id
-                  ? 'bg-blue-50 text-blue-700'
+                  ? 'text-slate-900'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
+              style={page === item.id ? { backgroundColor: '#f3e8ff' } : undefined}
             >
-              <span className={page === item.id ? 'text-blue-600' : 'text-slate-400'}>
+              <span style={page === item.id ? { color: '#6B2D8B' } : undefined} className={page === item.id ? '' : 'text-slate-400'}>
                 {item.icon}
               </span>
               {item.label}

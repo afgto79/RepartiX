@@ -131,14 +131,14 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
       {/* KPI row */}
       <div className="grid grid-cols-4 gap-4">
         {/* Reste à percevoir - carte principale */}
-        <div className="col-span-1 bg-slate-900 rounded-xl p-5 text-white relative overflow-hidden">
-          <p className="text-slate-400 text-[10px] uppercase tracking-widest mb-1">Reste à percevoir</p>
+        <div className="col-span-1 rounded-xl p-5 text-white relative overflow-hidden" style={{ backgroundColor: '#6B2D8B' }}>
+          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Reste à percevoir</p>
           <p className="text-3xl font-bold tracking-tight">{formatEuros(resteAPercevoir)}</p>
-          <div className="mt-3 text-xs text-slate-400 space-y-0.5">
-            <p>Déficit brut : <span className="text-slate-200">{formatEuros(totalDette)}</span></p>
-            <p>Régularisé : <span className="text-emerald-400">{formatEuros(totalRegulaRisations)}</span></p>
+          <div className="mt-3 text-xs space-y-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            <p>Déficit brut : <span className="text-white">{formatEuros(totalDette)}</span></p>
+            <p>Régularisé : <span style={{ color: '#e9d5ff' }}>{formatEuros(totalRegulaRisations)}</span></p>
           </div>
-          <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full blur-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
         </div>
 
         <div className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
