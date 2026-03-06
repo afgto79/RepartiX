@@ -4,6 +4,21 @@ import { calculerRemisesMensuelles } from '../services/remises';
 
 const router = Router();
 
+// GET /api/releves - Liste de toutes les decades importees
+router.get('/', async (_req, res) => {
+  try {
+    const releves = await getReleves();
+    const sorted = releves.sort((a, b) => {
+      if (a.annee !== b.annee) return b.annee - a.annee;
+      if (a.mois !== b.mois) return b.mois - a.mois;
+      return a.decade - b.decade;
+    });
+    res.json(sorted);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur liste releves' });
+  }
+});
+
 // GET /api/releves/:annee/:mois - Detail d'un mois
 router.get('/:annee/:mois', async (req, res) => {
   try {

@@ -49,10 +49,20 @@ export interface Reclamation {
   createdAt: string;
 }
 
+export interface Payment {
+  id: string;
+  claimId: string;   // reclamation.id
+  date: string;      // YYYY-MM-DD
+  amount: number;
+  comment: string;
+  createdAt: string;
+}
+
 export interface DataStore {
   releves: Releve[];
   regularisations: Regularisation[];
   reclamations: Reclamation[];
+  payments: Payment[];
   metadata: {
     lastUpdated: string;
     totalReleves: number;

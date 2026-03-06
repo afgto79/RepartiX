@@ -81,10 +81,35 @@ export interface Reclamation {
   moisDebut: string;
   moisFin: string;
   dateCreation: string;
-  statut: 'en_cours' | 'en_attente' | 'soldee';
+  statut: 'en_cours' | 'en_attente' | 'soldee' | 'ouverte' | 'cloturee';
   montantReclame: number;
   description: string;
   createdAt: string;
+}
+
+export interface Payment {
+  id: string;
+  claimId: string;
+  date: string;
+  amount: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface ReleveRaw {
+  id: string;
+  annee: number;
+  mois: number;
+  decade: 1 | 2 | 3;
+  totalNetHT: number;
+  totalTTC: number;
+  remiseAbnMargeHT: number | null;
+  remisesPartenariatsHT: number | null;
+  avoirsCommerciauxHT: number | null;
+  source: string;
+  parsingStatus: 'success' | 'partial' | 'failed';
+  parsingErrors?: string[];
+  importedAt: string;
 }
 
 export const api = {
@@ -247,5 +272,47 @@ export const api = {
       method: 'DELETE'
     });
     if (!res.ok) throw new Error('Erreur suppression reclamation');
+  },
+
+  // --- Payments ---
+
+  async getPayments(claimId?: string): Promise<Payment[]> {
+    const url = claimId ? `${API_BASE}/payments?claimId=${claimId}` : `${API_BASE}/payments`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Erreur chargement paiements');
+    return res.json();
+  },
+
+  async addPayment(data: { claimId: string; date: string; amount: number; comment: string }): Promise<Payment> {
+    const res = await fetch(`${API_BASE}/payments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur creation paiement');
+    return res.json();
+  },
+
+  async updatePayment(id: string, data: Partial<{ date: string; amount: number; comment: string }>): Promise<Payment> {
+    const res = await fetch(`${API_BASE}/payments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur modification paiement');
+    return res.json();
+  },
+
+  async deletePayment(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/payments/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression paiement');
+  },
+
+  // --- Releves bruts ---
+
+  async getAllReleves(): Promise<ReleveRaw[]> {
+    const res = await fetch(`${API_BASE}/releves`);
+    if (!res.ok) throw new Error('Erreur chargement releves');
+    return res.json();
   }
 };

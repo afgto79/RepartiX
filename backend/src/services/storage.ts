@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { Releve, Regularisation, Reclamation, DataStore } from '../types/releve';
+import { Releve, Regularisation, Reclamation, Payment, DataStore } from '../types/releve';
 
 const DATA_FILE = path.join(__dirname, '../data/releves.json');
 
@@ -18,12 +18,17 @@ export async function loadData(): Promise<DataStore> {
     if (!data.reclamations) {
       data.reclamations = [];
     }
+    // Migration: ajouter payments si absent
+    if (!data.payments) {
+      data.payments = [];
+    }
     return data;
   } catch {
     const emptyData: DataStore = {
       releves: [],
       regularisations: [],
       reclamations: [],
+      payments: [],
       metadata: {
         lastUpdated: new Date().toISOString(),
         totalReleves: 0
@@ -207,6 +212,50 @@ export async function deleteReclamation(id: string): Promise<boolean> {
         delete reg.reclamationId;
       }
     }
+    // Supprimer les paiements associes
+    data.payments = data.payments.filter(p => p.claimId !== id);
+    await saveData(data);
+    return true;
+  }
+  return false;
+}
+
+// --- Payments CRUD ---
+
+export async function getPayments(claimId?: string): Promise<Payment[]> {
+  const data = await loadData();
+  if (claimId) {
+    return data.payments.filter(p => p.claimId === claimId);
+  }
+  return data.payments;
+}
+
+export async function addPayment(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<Payment> {
+  const data = await loadData();
+  const newPayment: Payment = {
+    id: uuidv4(),
+    ...payment,
+    createdAt: new Date().toISOString()
+  };
+  data.payments.push(newPayment);
+  await saveData(data);
+  return newPayment;
+}
+
+export async function updatePayment(id: string, updates: Partial<Omit<Payment, 'id' | 'createdAt'>>): Promise<Payment | null> {
+  const data = await loadData();
+  const index = data.payments.findIndex(p => p.id === id);
+  if (index === -1) return null;
+  data.payments[index] = { ...data.payments[index], ...updates };
+  await saveData(data);
+  return data.payments[index];
+}
+
+export async function deletePayment(id: string): Promise<boolean> {
+  const data = await loadData();
+  const initialLength = data.payments.length;
+  data.payments = data.payments.filter(p => p.id !== id);
+  if (data.payments.length < initialLength) {
     await saveData(data);
     return true;
   }
