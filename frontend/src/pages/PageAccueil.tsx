@@ -94,10 +94,7 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
     return payments.filter(p => p.claimId === claimId).reduce((s, p) => s + p.amount, 0);
   }
 
-  const openClaims = reclamations.filter(r => {
-    const s = r.statut;
-    return s !== 'soldee' && s !== 'cloturee';
-  });
+  const openClaims = reclamations.filter(r => r.statut !== 'soldee' && r.statut !== 'cloturee');
 
   // Mois RETARD complets non couverts par une réclamation
   const moisCouverts = new Set<string>();
@@ -107,8 +104,6 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
   const moisRetardNonCouverts = allAnalyses.filter(
     a => a.statut === 'RETARD' && a.decadesPresentes.length === 3 && !moisCouverts.has(a.mois)
   );
-
-  const openClaims = reclamations.filter(r => r.statut !== 'soldee' && r.statut !== 'cloturee');
 
   // Réclamations prêtes à clore
   const pretesAClore = reclamations.filter(r => {
