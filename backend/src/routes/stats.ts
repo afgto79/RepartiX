@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getReleves, getRegularisations } from '../services/storage';
+import { getReleves, getPayments } from '../services/storage';
 import { calculerRemisesMensuelles } from '../services/remises';
 
 const router = Router();
@@ -30,15 +30,15 @@ router.get('/cumul', async (_req, res) => {
   try {
     const releves = await getReleves();
     const analyses = calculerRemisesMensuelles(releves);
-    const regularisations = await getRegularisations();
+    const payments = await getPayments();
 
     // Somme des deltas de tous les mois complets (avec 3 decades)
     const deltaCumulTotal = analyses
       .filter(a => a.decadesPresentes.length === 3)
       .reduce((sum, a) => sum + a.delta, 0);
 
-    // Total regularisations
-    const regulTotal = regularisations.reduce((sum, r) => sum + r.montant, 0);
+    // Total paiements manuels saisis sur les réclamations
+    const regulTotal = payments.reduce((sum, p) => sum + p.amount, 0);
 
     // Grouper par annee (deltas + reguls)
     const deltasParAnnee: Record<number, number> = {};
@@ -51,8 +51,9 @@ router.get('/cumul', async (_req, res) => {
       }
     }
 
-    for (const regul of regularisations) {
-      regulsParAnnee[regul.annee] = (regulsParAnnee[regul.annee] || 0) + regul.montant;
+    for (const payment of payments) {
+      const annee = parseInt(payment.date.split('-')[0]);
+      regulsParAnnee[annee] = (regulsParAnnee[annee] || 0) + payment.amount;
     }
 
     // Toutes les annees concernees

@@ -115,7 +115,8 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
   const chartData = analyses.map(a => ({
     mois: moisCourt(a.mois),
     delta: a.delta,
-    complet: a.decadesPresentes.length === 3
+    complet: a.decadesPresentes.length === 3,
+    couvert: moisCouverts.has(a.mois)
   }));
 
   // --- Alertes ---
@@ -202,7 +203,7 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
                 <ReferenceLine y={0} stroke="#cbd5e1" strokeDasharray="4 4" />
                 <Bar dataKey="delta" radius={[3, 3, 0, 0]} maxBarSize={32}>
                   {chartData.map((entry, i) => (
-                    <Cell key={i} fill={!entry.complet ? '#94a3b8' : entry.delta < 0 ? '#ef4444' : '#10b981'} />
+                    <Cell key={i} fill={!entry.complet ? '#94a3b8' : entry.couvert ? '#94a3b8' : entry.delta < 0 ? '#ef4444' : '#10b981'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -211,7 +212,7 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
           <p className="text-[10px] text-slate-400 mt-2">
             <span className="inline-block w-2 h-2 bg-red-400 rounded-sm mr-1" />Retard
             <span className="inline-block w-2 h-2 bg-emerald-400 rounded-sm mx-1 ml-3" />OK
-            <span className="inline-block w-2 h-2 bg-slate-300 rounded-sm mx-1 ml-3" />Incomplet
+            <span className="inline-block w-2 h-2 bg-slate-300 rounded-sm mx-1 ml-3" />Incomplet / Réclamé
           </p>
         </div>
 
