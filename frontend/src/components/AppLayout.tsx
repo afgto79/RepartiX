@@ -48,8 +48,8 @@ export function AppLayout({ page, onNavigate, onShutdown, pageTitle, headerRight
       <aside className="w-52 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
         {/* Brand */}
         <div className="px-5 py-5 border-b border-gray-100">
-          <p className="text-xl font-bold tracking-tight" style={{ color: '#6B2D8B' }}>cencora</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Alliance Healthcare</p>
+          <p className="text-xl font-bold tracking-tight" style={{ color: '#6B2D8B' }}>RepartiX</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">analyse de remise grossiste</p>
         </div>
 
         {/* Navigation */}
