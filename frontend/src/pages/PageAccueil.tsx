@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
-import { api, AnalyseRemise, Reclamation, Payment } from '../services/api';
+import { api, AnalyseRemise, Reclamation, Payment, CumulResponse } from '../services/api';
 import { formatEuros, formatMoisLabel } from '../utils/formatters';
 
 type Page = 'accueil' | 'reclamations' | 'donnees';
@@ -40,6 +40,7 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
   const [allAnalyses, setAllAnalyses] = useState<AnalyseRemise[]>([]);
   const [reclamations, setReclamations] = useState<Reclamation[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [cumul, setCumul] = useState<CumulResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadAll(); }, []);
@@ -48,14 +49,16 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
   async function loadAll() {
     setLoading(true);
     try {
-      const [reclams, pays, yearsList] = await Promise.all([
+      const [reclams, pays, yearsList, cumulData] = await Promise.all([
         api.getReclamations(),
         api.getPayments(),
-        api.getAnnees()
+        api.getAnnees(),
+        api.getCumul()
       ]);
       setReclamations(reclams);
       setPayments(pays);
       setYears(yearsList);
+      setCumul(cumulData);
 
       // Charger toutes les analyses (pour calcul global)
       const all: AnalyseRemise[] = [];
@@ -81,14 +84,15 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
   }
 
   // --- KPI globaux ---
+  // Reste à percevoir = déficit cumulé calculé depuis les PDFs (cumul endpoint)
+  const resteAPercevoir = cumul ? Math.abs(Math.min(0, cumul.resteDu)) : 0;
+  const totalDette = cumul ? Math.abs(Math.min(0, cumul.deltaCumulTotal)) : 0;
+  const totalRegulaRisations = cumul ? cumul.regulTotal : 0;
+  const recouvrementPct = totalDette > 0 ? Math.min(100, Math.round((totalRegulaRisations / totalDette) * 100)) : 0;
+
   function getReceived(claimId: string) {
     return payments.filter(p => p.claimId === claimId).reduce((s, p) => s + p.amount, 0);
   }
-
-  const totalReclame = reclamations.reduce((s, r) => s + r.montantReclame, 0);
-  const totalRecu = reclamations.reduce((s, r) => s + getReceived(r.id), 0);
-  const resteAPercevoir = totalReclame - totalRecu;
-  const recouvrementPct = totalReclame > 0 ? Math.round((totalRecu / totalReclame) * 100) : 0;
 
   const openClaims = reclamations.filter(r => {
     const s = r.statut;
@@ -104,10 +108,11 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
     a => a.statut === 'RETARD' && a.decadesPresentes.length === 3 && !moisCouverts.has(a.mois)
   );
 
+  const openClaims = reclamations.filter(r => r.statut !== 'soldee' && r.statut !== 'cloturee');
+
   // Réclamations prêtes à clore
   const pretesAClore = reclamations.filter(r => {
-    const s = r.statut;
-    if (s === 'soldee' || s === 'cloturee') return false;
+    if (r.statut === 'soldee' || r.statut === 'cloturee') return false;
     return getReceived(r.id) >= r.montantReclame && r.montantReclame > 0;
   });
 
@@ -134,8 +139,8 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
           <p className="text-slate-400 text-[10px] uppercase tracking-widest mb-1">Reste à percevoir</p>
           <p className="text-3xl font-bold tracking-tight">{formatEuros(resteAPercevoir)}</p>
           <div className="mt-3 text-xs text-slate-400 space-y-0.5">
-            <p>Réclamé : <span className="text-slate-200">{formatEuros(totalReclame)}</span></p>
-            <p>Reçu : <span className="text-emerald-400">{formatEuros(totalRecu)}</span></p>
+            <p>Déficit brut : <span className="text-slate-200">{formatEuros(totalDette)}</span></p>
+            <p>Régularisé : <span className="text-emerald-400">{formatEuros(totalRegulaRisations)}</span></p>
           </div>
           <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl" />
         </div>
@@ -165,7 +170,7 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
           <p className={`text-3xl font-bold ${recouvrementPct >= 80 ? 'text-emerald-600' : recouvrementPct >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
             {recouvrementPct}%
           </p>
-          {totalReclame > 0 && (
+          {totalDette > 0 && (
             <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${recouvrementPct}%` }} />
             </div>
