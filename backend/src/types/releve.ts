@@ -4,6 +4,7 @@ export interface Releve {
   annee: number;
   mois: number;
   decade: 1 | 2 | 3;
+  debitHT: number | null;
   totalNetHT: number;
   totalTTC: number;
   remiseAbnMargeHT: number | null;

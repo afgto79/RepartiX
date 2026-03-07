@@ -27,15 +27,22 @@ function grouperParMois(releves: Releve[]): Record<string, Releve[]> {
 }
 
 function analyserMois(moisKey: string, decades: Releve[]): AnalyseRemise {
-  // Somme des NET HT des decades presentes
-  const totalHTMensuel = decades.reduce((sum, d) => sum + d.totalNetHT, 0);
+  // Somme des Débit HT des decades presentes
+  const totalHTMensuel = decades.reduce((sum, d) => sum + (d.debitHT ?? d.totalNetHT), 0);
 
-  // Remise attendue = 3% du total HT (valeur positive)
-  const remiseAttendue = totalHTMensuel * 0.03;
-
-  // Remise reelle = valeur absolue de la remise sur decade 3
-  // (stockee en negatif dans le PDF, ex: -551.99 signifie 551.99 de remise)
+  // Decade 3 = recapitulatif mensuel pour RP, AC et remise contractuelle
   const decade3 = decades.find(d => d.decade === 3);
+
+  // Assiette = Débit HT mensuel - Remises partenariats (D3, cumulatif) - Avoirs commerciaux (D3, cumulatif)
+  const rpMensuel = Math.abs(decade3?.remisesPartenariatsHT ?? 0);
+  const acMensuel = Math.abs(decade3?.avoirsCommerciauxHT ?? 0);
+  const assiette = totalHTMensuel - rpMensuel - acMensuel;
+
+  // Remise attendue = 3% de l'assiette
+  const remiseAttendue = assiette * 0.03;
+
+  // Remise reelle = valeur absolue de la remise contractuelle cumulative mensuelle (D3)
+  // (stockee en negatif dans le PDF, ex: -551.99 signifie 551.99 de remise)
   const remiseReelleBrute = decade3?.remiseAbnMargeHT ?? 0;
   const remiseReelle = Math.abs(remiseReelleBrute);
 

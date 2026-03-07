@@ -100,9 +100,10 @@ function extractFields(text: string): Partial<Releve> {
   const totalMatch = text.match(totalRegex);
 
   if (totalMatch) {
-    // Group 3 = Montant net HT (3eme valeur apres les headers)
+    // Group 1 = Débit HT, Group 3 = Net HT
+    fields.debitHT = parseMonetaire(totalMatch[1]);
     fields.totalNetHT = parseMonetaire(totalMatch[3]);
-    console.info(`[PDF Parser] Total NET HT: ${fields.totalNetHT}`);
+    console.info(`[PDF Parser] Débit HT: ${fields.debitHT}, Total NET HT: ${fields.totalNetHT}`);
   } else {
     errors.push('Total NET HT non trouve');
   }
