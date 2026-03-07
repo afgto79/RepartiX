@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, Reclamation, Payment, AnalyseRemise } from '../services/api';
 import { formatEuros, formatMoisLabel } from '../utils/formatters';
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
 type ClaimStatus = 'ouverte' | 'prete_a_clore' | 'cloturee';
 type Filter = 'toutes' | 'ouverte' | 'prete_a_clore' | 'cloturee';
@@ -37,6 +38,7 @@ export function PageReclamations() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('toutes');
   const [loading, setLoading] = useState(true);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
 
   // Formulaire réclamation
   const [showClaimForm, setShowClaimForm] = useState(false);
@@ -161,7 +163,6 @@ export function PageReclamations() {
   }
 
   async function clearAllClaims() {
-    if (!confirm(`Supprimer toutes les réclamations (${claims.length}) et leurs paiements ?`)) return;
     try {
       await api.clearAllReclamations();
       setSelectedId(null);
@@ -216,6 +217,14 @@ export function PageReclamations() {
 
   return (
     <div className="flex h-full">
+      {showConfirmClear && (
+        <ConfirmDeleteModal
+          title="Supprimer toutes les réclamations ?"
+          description={`${claims.length} réclamation(s) et tous leurs paiements seront supprimés définitivement.`}
+          onConfirm={() => { setShowConfirmClear(false); clearAllClaims(); }}
+          onCancel={() => setShowConfirmClear(false)}
+        />
+      )}
       {/* Colonne gauche — liste */}
       <div className="w-80 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col">
         {/* Header liste */}
@@ -228,7 +237,7 @@ export function PageReclamations() {
           </button>
           {claims.length > 0 && (
             <button
-              onClick={clearAllClaims}
+              onClick={() => setShowConfirmClear(true)}
               className="w-full py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
             >
               Tout supprimer

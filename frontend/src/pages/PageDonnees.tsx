@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, ReleveRaw, AnalyseRemise, Reclamation } from '../services/api';
 import { formatEuros, formatMoisLabel } from '../utils/formatters';
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
 type Tab = 'decades' | 'mois';
 
@@ -38,6 +39,7 @@ export function PageDonnees() {
   const [scanning, setScanning] = useState(false);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadAll(); }, []);
@@ -111,7 +113,6 @@ export function PageDonnees() {
   }
 
   async function handleClearAll() {
-    if (!confirm(`Supprimer toutes les décades importées (${releves.length}) ? Les réclamations ne seront pas affectées.`)) return;
     try {
       const count = await api.clearAllReleves();
       setMessage({ type: 'ok', text: `${count} décade(s) supprimée(s)` });
@@ -139,6 +140,14 @@ export function PageDonnees() {
 
   return (
     <div className="p-6">
+      {showConfirmClear && (
+        <ConfirmDeleteModal
+          title="Supprimer toutes les décades ?"
+          description={`${releves.length} décade(s) seront supprimées définitivement. Les réclamations ne seront pas affectées.`}
+          onConfirm={() => { setShowConfirmClear(false); handleClearAll(); }}
+          onCancel={() => setShowConfirmClear(false)}
+        />
+      )}
       {/* Tabs */}
       <div className="flex gap-1 mb-5 border-b border-slate-200">
         {(['decades', 'mois'] as Tab[]).map(t => (
@@ -188,7 +197,7 @@ export function PageDonnees() {
             <span className="text-xs text-slate-400">{relevesFiltres.length} décade(s)</span>
             {releves.length > 0 && (
               <button
-                onClick={handleClearAll}
+                onClick={() => setShowConfirmClear(true)}
                 className="ml-auto px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
               >
                 Tout supprimer
