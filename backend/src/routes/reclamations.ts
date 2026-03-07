@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getReclamations, addReclamation, updateReclamation, deleteReclamation } from '../services/storage';
+import { getReclamations, addReclamation, updateReclamation, deleteReclamation, clearReclamations } from '../services/storage';
 
 const router = Router();
 
@@ -58,6 +58,16 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/reclamations/:id
+// DELETE /api/reclamations - Suppression de toutes les réclamations et paiements associés
+router.delete('/', async (_req, res) => {
+  try {
+    const count = await clearReclamations();
+    res.json({ deleted: count });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur suppression totale' });
+  }
+});
+
 router.delete('/:id', async (req, res) => {
   try {
     const deleted = await deleteReclamation(req.params.id);

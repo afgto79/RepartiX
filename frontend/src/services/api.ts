@@ -281,6 +281,13 @@ export const api = {
     if (!res.ok) throw new Error('Erreur suppression reclamation');
   },
 
+  async clearAllReclamations(): Promise<number> {
+    const res = await fetch(`${API_BASE}/reclamations`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression totale');
+    const data = await res.json();
+    return data.deleted;
+  },
+
   // --- Payments ---
 
   async getPayments(claimId?: string): Promise<Payment[]> {

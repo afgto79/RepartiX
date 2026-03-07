@@ -228,6 +228,15 @@ export async function deleteReclamation(id: string): Promise<boolean> {
   return false;
 }
 
+export async function clearReclamations(): Promise<number> {
+  const data = await loadData();
+  const count = data.reclamations.length;
+  data.reclamations = [];
+  data.payments = [];
+  await saveData(data);
+  return count;
+}
+
 // --- Payments CRUD ---
 
 export async function getPayments(claimId?: string): Promise<Payment[]> {

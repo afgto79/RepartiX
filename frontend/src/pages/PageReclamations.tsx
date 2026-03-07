@@ -160,6 +160,15 @@ export function PageReclamations() {
     } catch (err) { console.error(err); }
   }
 
+  async function clearAllClaims() {
+    if (!confirm(`Supprimer toutes les réclamations (${claims.length}) et leurs paiements ?`)) return;
+    try {
+      await api.clearAllReclamations();
+      setSelectedId(null);
+      await loadAll();
+    } catch (err) { console.error(err); }
+  }
+
   // --- Payment CRUD ---
   function openNewPayment() {
     setEditPaymentId(null);
@@ -217,6 +226,14 @@ export function PageReclamations() {
           >
             + Nouvelle réclamation
           </button>
+          {claims.length > 0 && (
+            <button
+              onClick={clearAllClaims}
+              className="w-full py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              Tout supprimer
+            </button>
+          )}
           {/* Filtres */}
           <div className="flex gap-1 flex-wrap">
             {FILTERS.map(f => (
