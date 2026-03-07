@@ -160,6 +160,13 @@ export const api = {
     }
   },
 
+  async clearAllReleves(): Promise<number> {
+    const res = await fetch(`${API_BASE}/releves`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression totale');
+    const data = await res.json();
+    return data.deleted;
+  },
+
   async scanFolder(force: boolean = false): Promise<ScanResponse> {
     const res = await fetch(`${API_BASE}/scan-folder`, {
       method: 'POST',

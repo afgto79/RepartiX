@@ -110,6 +110,17 @@ export function PageDonnees() {
     }
   }
 
+  async function handleClearAll() {
+    if (!confirm(`Supprimer toutes les décades importées (${releves.length}) ? Les réclamations ne seront pas affectées.`)) return;
+    try {
+      const count = await api.clearAllReleves();
+      setMessage({ type: 'ok', text: `${count} décade(s) supprimée(s)` });
+      await loadAll();
+    } catch (err) {
+      setMessage({ type: 'err', text: 'Erreur lors de la suppression' });
+    }
+  }
+
   // Mois couverts par une réclamation
   const moisCouverts = new Map<string, string>(); // moisKey → reference
   for (const r of reclamations) {
@@ -175,6 +186,14 @@ export function PageDonnees() {
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             <span className="text-xs text-slate-400">{relevesFiltres.length} décade(s)</span>
+            {releves.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="ml-auto px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+              >
+                Tout supprimer
+              </button>
+            )}
 
             {message && (
               <span className={`text-xs font-medium px-3 py-1.5 rounded-lg ${message.type === 'ok' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>

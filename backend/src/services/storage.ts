@@ -162,6 +162,14 @@ export async function deleteReleve(id: string): Promise<boolean> {
   return false;
 }
 
+export async function clearReleves(): Promise<number> {
+  const data = await loadData();
+  const count = data.releves.length;
+  data.releves = [];
+  await saveData(data);
+  return count;
+}
+
 // --- Reclamations CRUD ---
 
 function generateReference(reclamations: Reclamation[], dateCreation: string): string {

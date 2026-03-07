@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getReleves, deleteReleve } from '../services/storage';
+import { getReleves, deleteReleve, clearReleves } from '../services/storage';
 import { calculerRemisesMensuelles } from '../services/remises';
 
 const router = Router();
@@ -69,6 +69,17 @@ router.get('/:annee/:mois', async (req, res) => {
       error: 'Erreur lors du chargement du detail',
       details: err instanceof Error ? err.message : 'Erreur inconnue'
     });
+  }
+});
+
+// DELETE /api/releves - Suppression de toutes les decades (sans toucher aux réclamations)
+router.delete('/', async (_req, res) => {
+  try {
+    const count = await clearReleves();
+    res.json({ deleted: count });
+  } catch (err) {
+    console.error('[Releves] Erreur suppression totale:', err);
+    res.status(500).json({ error: 'Erreur lors de la suppression' });
   }
 });
 
