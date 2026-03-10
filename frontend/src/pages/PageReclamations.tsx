@@ -267,28 +267,23 @@ export function PageReclamations() {
     if (!selectedReliquat) return;
     try {
       const amount = parseFloat(claimFromReliquatAmount);
+      // Créer la réclamation liée au reliquat
       const created = await api.addReclamation({
         moisDebut: selectedReliquat.periodStart,
         moisFin: selectedReliquat.periodEnd,
         dateCreation: TODAY,
         statut: 'ouverte',
         montantReclame: amount,
-        description: 'Depuis reliquat'
+        description: 'Depuis reliquat',
+        sourceReliquatId: selectedReliquat.id
       });
-      const diff = Math.round((selectedReliquat.remainingAmount - amount) * 100) / 100;
-      await api.updateReliquat(selectedReliquat.id, { status: 'closed' });
-      if (diff > 0.01) {
-        await api.addReliquat({
-          originReclamationId: created.id,
-          periodStart: selectedReliquat.periodStart,
-          periodEnd: selectedReliquat.periodEnd,
-          initialAmount: diff,
-          remainingAmount: diff,
-          status: 'active'
-        });
-      }
+      // Réduire le remainingAmount du reliquat (ne pas le clore, sauf si épuisé)
+      const newRemaining = Math.round((selectedReliquat.remainingAmount - amount) * 100) / 100;
+      await api.updateReliquat(selectedReliquat.id, {
+        remainingAmount: Math.max(0, newRemaining),
+        status: newRemaining <= 0.01 ? 'closed' : 'active'
+      });
       setShowClaimFromReliquat(false);
-      setSelectedReliquatId(null);
       selectClaim(created.id);
       await loadAll();
     } catch (err) { console.error(err); }
@@ -683,6 +678,29 @@ export function PageReclamations() {
                     <p className="text-lg font-bold text-amber-900">{formatEuros(selectedReliquat.remainingAmount)}</p>
                   </div>
                 </div>
+
+                {/* Réclamations issues de ce reliquat */}
+                {(() => {
+                  const linked = claims.filter(c => c.sourceReliquatId === selectedReliquat.id);
+                  if (linked.length === 0) return null;
+                  return (
+                    <div className="mb-5">
+                      <p className="text-[10px] text-amber-700 uppercase font-semibold mb-2">Réclamations émises</p>
+                      <div className="space-y-1">
+                        {linked.map(c => (
+                          <button key={c.id} onClick={() => selectClaim(c.id)}
+                            className="w-full flex items-center justify-between bg-white/60 rounded-lg px-3 py-2 text-xs hover:bg-white/90 transition-colors">
+                            <span className="font-semibold text-amber-900">{c.reference}</span>
+                            <span className="text-amber-700">{formatEuros(c.montantReclame)}</span>
+                          </button>
+                        ))}
+                        <p className="text-[10px] text-amber-600 text-right pt-1">
+                          Total réclamé : {formatEuros(linked.reduce((s, c) => s + c.montantReclame, 0))}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {selectedReliquat.status === 'active' && (
                   <>

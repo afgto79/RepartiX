@@ -84,6 +84,7 @@ export interface Reclamation {
   statut: 'en_cours' | 'en_attente' | 'soldee' | 'ouverte' | 'cloturee';
   montantReclame: number;
   description: string;
+  sourceReliquatId?: string;
   createdAt: string;
 }
 
