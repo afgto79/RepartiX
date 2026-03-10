@@ -313,6 +313,24 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
                 </tr>
               ))}
             </tbody>
+            {analyses.length > 0 && (() => {
+              const totAttendue = analyses.reduce((s, a) => s + a.remiseAttendue, 0);
+              const totRecue = analyses.reduce((s, a) => s + Math.abs(a.remiseReelle), 0);
+              const totDelta = analyses.reduce((s, a) => s + a.delta, 0);
+              return (
+                <tfoot>
+                  <tr className="border-t-2 border-slate-200 bg-slate-50">
+                    <td className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-700">{formatEuros(totAttendue)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-700">{formatEuros(totRecue)}</td>
+                    <td className={`px-4 py-3 text-right font-bold ${totDelta < -0.01 ? 'text-red-600' : 'text-emerald-600'}`}>
+                      {formatEuros(totDelta)}
+                    </td>
+                    <td className="px-4 py-3" />
+                  </tr>
+                </tfoot>
+              );
+            })()}
           </table>
         </div>
       </div>

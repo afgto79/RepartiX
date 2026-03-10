@@ -8,8 +8,15 @@ export function calculerRemisesMensuelles(releves: Releve[]): AnalyseRemise[] {
   const groupes = grouperParMois(releves);
 
   return Object.entries(groupes)
-    .map(([moisKey, decades]) => analyserMois(moisKey, decades))
+    .map(([moisKey, decades]) => analyserMois(moisKey, decades, groupes))
     .sort((a, b) => a.mois.localeCompare(b.mois));
+}
+
+function moisSuivant(moisKey: string): string {
+  const [year, month] = moisKey.split('-').map(Number);
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  return `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
 }
 
 function grouperParMois(releves: Releve[]): Record<string, Releve[]> {
@@ -26,7 +33,7 @@ function grouperParMois(releves: Releve[]): Record<string, Releve[]> {
   return groupes;
 }
 
-function analyserMois(moisKey: string, decades: Releve[]): AnalyseRemise {
+function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string, Releve[]>): AnalyseRemise {
   // Somme des Débit HT des decades presentes
   const totalHTMensuel = decades.reduce((sum, d) => sum + (d.debitHT ?? d.totalNetHT), 0);
 
@@ -41,10 +48,10 @@ function analyserMois(moisKey: string, decades: Releve[]): AnalyseRemise {
   // Remise attendue = 3% de l'assiette
   const remiseAttendue = assiette * 0.03;
 
-  // Remise reelle = valeur absolue de la remise contractuelle cumulative mensuelle (D3)
-  // (stockee en negatif dans le PDF, ex: -551.99 signifie 551.99 de remise)
-  const remiseReelleBrute = decade3?.remiseAbnMargeHT ?? 0;
-  const remiseReelle = Math.abs(remiseReelleBrute);
+  // Remise reelle = D3 du mois M+1 (regle metier : la remise contractuelle cumulee de D3
+  // mois M correspond a la remise reelle du mois M-1, donc on lit D3 de M+1 pour le mois M)
+  const nextDecade3 = (groupes[moisSuivant(moisKey)] ?? []).find(d => d.decade === 3);
+  const remiseReelle = nextDecade3 !== undefined ? Math.abs(nextDecade3.remiseAbnMargeHT ?? 0) : 0;
 
   // Delta = remise recue - remise attendue
   // Negatif = manque a gagner, Positif = bonus
@@ -57,7 +64,7 @@ function analyserMois(moisKey: string, decades: Releve[]): AnalyseRemise {
   const decadesPresentes = decades.map(d => d.decade).sort();
   let statut: 'OK' | 'EN_COURS' | 'RETARD';
 
-  if (decadesPresentes.length < 3) {
+  if (decadesPresentes.length < 3 || nextDecade3 === undefined) {
     statut = 'EN_COURS';
   } else if (Math.abs(delta) < 0.01) {
     statut = 'OK';

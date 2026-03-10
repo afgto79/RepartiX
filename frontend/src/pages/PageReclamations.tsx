@@ -274,7 +274,10 @@ export function PageReclamations() {
         dateCreation: TODAY,
         statut: 'ouverte',
         montantReclame: amount,
-        description: 'Depuis reliquat',
+        description: (() => {
+          const originClaim = claims.find(c => c.id === selectedReliquat.originReclamationId);
+          return originClaim ? `Depuis reliquat de ${originClaim.reference}` : 'Depuis reliquat';
+        })(),
         sourceReliquatId: selectedReliquat.id
       });
       // Réduire le remainingAmount du reliquat (ne pas le clore, sauf si épuisé)
@@ -464,7 +467,14 @@ export function PageReclamations() {
                     <span className="text-xs font-semibold text-slate-700">{c.reference}</span>
                     <StatusBadge status={status} />
                   </div>
-                  <p className="text-[10px] text-slate-500 mb-2">{formatMoisLabel(c.moisDebut)} → {formatMoisLabel(c.moisFin)}</p>
+                  <p className="text-[10px] text-slate-500 mb-1">{formatMoisLabel(c.moisDebut)} → {formatMoisLabel(c.moisFin)}</p>
+                  {c.sourceReliquatId && (() => {
+                    const rel = reliquats.find(r => r.id === c.sourceReliquatId);
+                    const originClaim = rel ? claims.find(oc => oc.id === rel.originReclamationId) : null;
+                    return originClaim ? (
+                      <p className="text-[10px] text-amber-600 mb-1">Reliquat de {originClaim.reference}</p>
+                    ) : null;
+                  })()}
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-500">Réclamé: <span className="font-medium text-slate-700">{formatEuros(c.montantReclame)}</span></span>
                     <span className={remaining > 0.01 ? 'text-red-600 font-semibold' : 'text-emerald-600 font-semibold'}>

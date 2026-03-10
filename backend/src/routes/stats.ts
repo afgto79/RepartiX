@@ -9,8 +9,14 @@ router.get('/dashboard', async (req, res) => {
   try {
     const annee = req.query.annee ? parseInt(req.query.annee as string) : new Date().getFullYear();
 
-    const releves = await getReleves({ annee });
-    const analyses = calculerRemisesMensuelles(releves);
+    // Charger aussi les releves de l'annee suivante pour pouvoir lire
+    // la D3 de janvier N+1 (remise reelle de decembre N)
+    const [releves, relevesNext] = await Promise.all([
+      getReleves({ annee }),
+      getReleves({ annee: annee + 1 })
+    ]);
+    const analyses = calculerRemisesMensuelles([...releves, ...relevesNext])
+      .filter(a => a.mois.startsWith(`${annee}-`));
 
     res.json({
       annee,
