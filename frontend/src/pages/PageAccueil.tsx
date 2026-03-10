@@ -286,7 +286,9 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
               <tr className="border-b border-slate-100 bg-slate-50">
                 <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Mois</th>
                 <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Attendue</th>
-                <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reçue</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Annoncée</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Frais</th>
+                <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reversée</th>
                 <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Delta</th>
                 <th className="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
               </tr>
@@ -294,7 +296,7 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
             <tbody className="divide-y divide-slate-50">
               {analyses.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-slate-400 text-sm">
+                  <td colSpan={7} className="text-center py-8 text-slate-400 text-sm">
                     Aucune donnée pour {annee}
                   </td>
                 </tr>
@@ -303,7 +305,9 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
                 <tr key={a.mois} className="hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-3 text-slate-800 font-medium">{formatMoisLabel(a.mois)}</td>
                   <td className="px-4 py-3 text-right text-slate-600">{formatEuros(a.remiseAttendue)}</td>
-                  <td className="px-4 py-3 text-right text-slate-600">{formatEuros(Math.abs(a.remiseReelle))}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{formatEuros(a.remiseReelle)}</td>
+                  <td className="px-4 py-3 text-right text-slate-500">{a.fraisGeneraux > 0 ? formatEuros(a.fraisGeneraux) : '—'}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{formatEuros(a.reversee)}</td>
                   <td className={`px-4 py-3 text-right font-semibold ${a.delta < -0.01 ? 'text-red-600' : 'text-emerald-600'}`}>
                     {formatEuros(a.delta)}
                   </td>
@@ -315,14 +319,18 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
             </tbody>
             {analyses.length > 0 && (() => {
               const totAttendue = analyses.reduce((s, a) => s + a.remiseAttendue, 0);
-              const totRecue = analyses.reduce((s, a) => s + Math.abs(a.remiseReelle), 0);
+              const totAnnoncee = analyses.reduce((s, a) => s + a.remiseReelle, 0);
+              const totFrais = analyses.reduce((s, a) => s + a.fraisGeneraux, 0);
+              const totReversee = analyses.reduce((s, a) => s + a.reversee, 0);
               const totDelta = analyses.reduce((s, a) => s + a.delta, 0);
               return (
                 <tfoot>
                   <tr className="border-t-2 border-slate-200 bg-slate-50">
                     <td className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total</td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-700">{formatEuros(totAttendue)}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-700">{formatEuros(totRecue)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-700">{formatEuros(totAnnoncee)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-500">{formatEuros(totFrais)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-700">{formatEuros(totReversee)}</td>
                     <td className={`px-4 py-3 text-right font-bold ${totDelta < -0.01 ? 'text-red-600' : 'text-emerald-600'}`}>
                       {formatEuros(totDelta)}
                     </td>

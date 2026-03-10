@@ -283,7 +283,9 @@ export function PageDonnees() {
                   <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Mois</th>
                   <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Décades</th>
                   <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Attendue</th>
-                  <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reçue</th>
+                  <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Annoncée</th>
+                  <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Frais</th>
+                  <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reversée</th>
                   <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Delta</th>
                   <th className="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
                   <th className="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Réclamation</th>
@@ -291,7 +293,7 @@ export function PageDonnees() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {analyses.length === 0 && (
-                  <tr><td colSpan={7} className="text-center py-8 text-slate-400 text-sm">Aucune donnée pour {annee}</td></tr>
+                  <tr><td colSpan={9} className="text-center py-8 text-slate-400 text-sm">Aucune donnée pour {annee}</td></tr>
                 )}
                 {analyses.map(a => {
                   const claimRef = moisCouverts.get(a.mois);
@@ -315,7 +317,9 @@ export function PageDonnees() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right text-slate-600">{formatEuros(a.remiseAttendue)}</td>
-                      <td className="px-4 py-3 text-right text-slate-600">{formatEuros(Math.abs(a.remiseReelle))}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{formatEuros(a.remiseReelle)}</td>
+                      <td className="px-4 py-3 text-right text-slate-500">{a.fraisGeneraux > 0 ? formatEuros(a.fraisGeneraux) : '—'}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{formatEuros(a.reversee)}</td>
                       <td className={`px-4 py-3 text-right font-semibold ${a.delta < -0.01 ? 'text-red-600' : 'text-emerald-600'}`}>
                         {formatEuros(a.delta)}
                       </td>

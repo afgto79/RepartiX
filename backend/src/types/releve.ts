@@ -10,6 +10,7 @@ export interface Releve {
   remiseAbnMargeHT: number | null;
   remisesPartenariatsHT: number | null;
   avoirsCommerciauxHT: number | null;
+  fraisGenerauxBrutHT: number | null;
   importedAt: string;
   source: string;
   hash: string;
@@ -21,8 +22,10 @@ export interface AnalyseRemise {
   mois: string;
   totalHTMensuel: number;
   remiseAttendue: number;
-  remiseReelle: number;
-  delta: number;
+  remiseReelle: number;    // = annoncée (brute, avant frais)
+  fraisGeneraux: number;   // frais généraux brut HT déduits par le répartiteur
+  reversee: number;        // = annoncée - frais (net reversé)
+  delta: number;           // = reversée - attendue (négatif = manque à gagner)
   deltaPourcent: number;
   statut: 'OK' | 'EN_COURS' | 'RETARD';
   decadesPresentes: number[];

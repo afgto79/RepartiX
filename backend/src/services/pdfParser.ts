@@ -163,6 +163,18 @@ function extractFields(text: string): Partial<Releve> {
     console.info(`[PDF Parser] Avoirs commerciaux: ${fields.avoirsCommerciauxHT}`);
   }
 
+  // === 7. FRAIS GENERAUX ===
+  // Texte: "Total frais généraux   62,22   62,22   ..."
+  // Premier nombre = Montant brut HT
+  const fraisRegex = /Total\s+frais\s+g[eé]n[eé]raux\s+([\d][\d\s]*[,\.]\d{2})/i;
+  const fraisMatch = text.match(fraisRegex);
+  if (fraisMatch) {
+    fields.fraisGenerauxBrutHT = parseMonetaire(fraisMatch[1]);
+    console.info(`[PDF Parser] Frais généraux brut HT: ${fields.fraisGenerauxBrutHT}`);
+  } else {
+    fields.fraisGenerauxBrutHT = null;
+  }
+
   if (errors.length > 0) {
     fields.parsingErrors = errors;
     console.warn('[PDF Parser] Erreurs parsing:', errors);

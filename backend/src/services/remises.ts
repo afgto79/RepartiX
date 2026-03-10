@@ -48,14 +48,17 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
   // Remise attendue = 3% de l'assiette
   const remiseAttendue = assiette * 0.03;
 
-  // Remise reelle = D3 du mois M+1 (regle metier : la remise contractuelle cumulee de D3
-  // mois M correspond a la remise reelle du mois M-1, donc on lit D3 de M+1 pour le mois M)
+  // Remise annoncee et frais generaux = D3 du mois M+1
+  // (regle metier : D3 mois M contient les donnees cumulatives du mois M-1)
   const nextDecade3 = (groupes[moisSuivant(moisKey)] ?? []).find(d => d.decade === 3);
   const remiseReelle = nextDecade3 !== undefined ? Math.abs(nextDecade3.remiseAbnMargeHT ?? 0) : 0;
+  const fraisGeneraux = nextDecade3 !== undefined ? Math.abs(nextDecade3.fraisGenerauxBrutHT ?? 0) : 0;
 
-  // Delta = remise recue - remise attendue
-  // Negatif = manque a gagner, Positif = bonus
-  const delta = remiseReelle - remiseAttendue;
+  // Reversee = annoncee - frais (ce qui est reellement reverse net de frais)
+  const reversee = remiseReelle - fraisGeneraux;
+
+  // Delta = reversee - attendue (negatif = manque a gagner)
+  const delta = reversee - remiseAttendue;
   const deltaPourcent = remiseAttendue !== 0
     ? (delta / remiseAttendue) * 100
     : 0;
@@ -66,9 +69,7 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
 
   if (decadesPresentes.length < 3 || nextDecade3 === undefined) {
     statut = 'EN_COURS';
-  } else if (Math.abs(delta) < 0.01) {
-    statut = 'OK';
-  } else if (delta >= 0) {
+  } else if (delta >= -0.01) {
     statut = 'OK';
   } else {
     statut = 'RETARD';
@@ -79,6 +80,8 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
     totalHTMensuel: arrondir(totalHTMensuel),
     remiseAttendue: arrondir(remiseAttendue),
     remiseReelle: arrondir(remiseReelle),
+    fraisGeneraux: arrondir(fraisGeneraux),
+    reversee: arrondir(reversee),
     delta: arrondir(delta),
     deltaPourcent: arrondir(deltaPourcent),
     statut,

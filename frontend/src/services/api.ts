@@ -4,8 +4,10 @@ export interface AnalyseRemise {
   mois: string;
   totalHTMensuel: number;
   remiseAttendue: number;
-  remiseReelle: number;
-  delta: number;
+  remiseReelle: number;    // annoncée brute
+  fraisGeneraux: number;   // frais généraux déduits
+  reversee: number;        // annoncée - frais
+  delta: number;           // reversée - attendue (négatif = manque à gagner)
   deltaPourcent: number;
   statut: 'OK' | 'EN_COURS' | 'RETARD';
   decadesPresentes: number[];
