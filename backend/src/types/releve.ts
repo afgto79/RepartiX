@@ -59,11 +59,23 @@ export interface Payment {
   createdAt: string;
 }
 
+export interface Reliquat {
+  id: string;
+  originReclamationId: string;
+  periodStart: string;   // YYYY-MM
+  periodEnd: string;     // YYYY-MM
+  initialAmount: number;
+  remainingAmount: number;
+  status: 'active' | 'closed' | 'abandoned';
+  createdAt: string;
+}
+
 export interface DataStore {
   releves: Releve[];
   regularisations: Regularisation[];
   reclamations: Reclamation[];
   payments: Payment[];
+  reliquats: Reliquat[];
   metadata: {
     lastUpdated: string;
     totalReleves: number;

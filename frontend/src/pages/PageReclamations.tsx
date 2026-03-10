@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { api, Reclamation, Payment, AnalyseRemise } from '../services/api';
+import { api, Reclamation, Payment, Reliquat, AnalyseRemise } from '../services/api';
 import { formatEuros, formatMoisLabel } from '../utils/formatters';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
 type ClaimStatus = 'ouverte' | 'prete_a_clore' | 'cloturee';
-type Filter = 'toutes' | 'ouverte' | 'prete_a_clore' | 'cloturee';
+type Filter = 'toutes' | 'ouverte' | 'prete_a_clore' | 'cloturee' | 'reliquat';
 
 function getMoisRange(debut: string, fin: string): string[] {
   const result: string[] = [];
@@ -34,8 +34,10 @@ const TODAY = new Date().toISOString().slice(0, 10);
 export function PageReclamations() {
   const [claims, setClaims] = useState<Reclamation[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [reliquats, setReliquats] = useState<Reliquat[]>([]);
   const [allAnalyses, setAllAnalyses] = useState<AnalyseRemise[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
+  const [selectedReliquatId, setSelectedReliquatId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('toutes');
   const [loading, setLoading] = useState(true);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
@@ -49,6 +51,15 @@ export function PageReclamations() {
   });
   const [autoAmount, setAutoAmount] = useState<number | null>(null);
 
+  // Prompt reliquat (après soumission si montant < calculé)
+  const [pendingReliquat, setPendingReliquat] = useState<{
+    claimId: string; moisDebut: string; moisFin: string; amount: number
+  } | null>(null);
+
+  // Formulaire "créer réclamation depuis reliquat"
+  const [showClaimFromReliquat, setShowClaimFromReliquat] = useState(false);
+  const [claimFromReliquatAmount, setClaimFromReliquatAmount] = useState('');
+
   // Formulaire paiement
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null);
@@ -59,13 +70,15 @@ export function PageReclamations() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [c, p, years] = await Promise.all([
+      const [c, p, r, years] = await Promise.all([
         api.getReclamations(),
         api.getPayments(),
+        api.getReliquats(),
         api.getAnnees()
       ]);
       setClaims(c);
       setPayments(p);
+      setReliquats(r);
 
       const all: AnalyseRemise[] = [];
       for (const y of years) {
@@ -88,16 +101,44 @@ export function PageReclamations() {
     return payments.filter(p => p.claimId === claimId).sort((a, b) => b.date.localeCompare(a.date));
   }
 
-  const selectedClaim = claims.find(c => c.id === selectedId) ?? null;
-  const selectedPayments = selectedId ? getClaimPayments(selectedId) : [];
+  function selectClaim(id: string) {
+    setSelectedClaimId(id);
+    setSelectedReliquatId(null);
+    setShowPaymentForm(false);
+    setShowClaimFromReliquat(false);
+  }
 
-  // Filtrage
-  const filtered = claims.filter(c => {
-    const received = getReceived(c.id);
-    const status = computeStatus(c, received);
-    if (filter === 'toutes') return true;
-    return status === filter;
-  }).sort((a, b) => b.dateCreation.localeCompare(a.dateCreation));
+  function selectReliquat(id: string) {
+    setSelectedReliquatId(id);
+    setSelectedClaimId(null);
+    setShowPaymentForm(false);
+    setShowClaimFromReliquat(false);
+  }
+
+  const selectedClaim = claims.find(c => c.id === selectedClaimId) ?? null;
+  const selectedReliquat = reliquats.find(r => r.id === selectedReliquatId) ?? null;
+  const selectedPayments = selectedClaimId ? getClaimPayments(selectedClaimId) : [];
+
+  // Liste combinée claims + reliquats filtrée
+  type ListItem = { kind: 'claim'; data: Reclamation } | { kind: 'reliquat'; data: Reliquat };
+  const listItems: ListItem[] = [];
+  if (filter !== 'reliquat') {
+    claims.forEach(c => {
+      const received = getReceived(c.id);
+      const status = computeStatus(c, received);
+      if (filter === 'toutes' || status === filter) {
+        listItems.push({ kind: 'claim', data: c });
+      }
+    });
+  }
+  if (filter === 'toutes' || filter === 'reliquat') {
+    reliquats.forEach(r => listItems.push({ kind: 'reliquat', data: r }));
+  }
+  listItems.sort((a, b) => {
+    const dateA = a.kind === 'claim' ? a.data.dateCreation : a.data.createdAt;
+    const dateB = b.kind === 'claim' ? b.data.dateCreation : b.data.createdAt;
+    return dateB.localeCompare(dateA);
+  });
 
   // Auto-calcul montant depuis les mois sélectionnés
   useEffect(() => {
@@ -132,17 +173,50 @@ export function PageReclamations() {
   async function submitClaim(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const data = { moisDebut: claimForm.moisDebut, moisFin: claimForm.moisFin, dateCreation: claimForm.dateCreation, statut: 'ouverte', montantReclame: parseFloat(claimForm.montantReclame), description: claimForm.description };
+      const amount = parseFloat(claimForm.montantReclame);
+      const data = {
+        moisDebut: claimForm.moisDebut, moisFin: claimForm.moisFin,
+        dateCreation: claimForm.dateCreation, statut: 'ouverte',
+        montantReclame: amount, description: claimForm.description
+      };
       if (editClaimId) {
         await api.updateReclamation(editClaimId, data);
+        setShowClaimForm(false);
+        setEditClaimId(null);
+        await loadAll();
       } else {
         const created = await api.addReclamation(data);
-        setSelectedId(created.id);
+        setShowClaimForm(false);
+        selectClaim(created.id);
+        await loadAll();
+        // Propose reliquat si montant < déficit calculé
+        if (autoAmount !== null && amount < autoAmount - 0.01) {
+          setPendingReliquat({
+            claimId: created.id,
+            moisDebut: claimForm.moisDebut,
+            moisFin: claimForm.moisFin,
+            amount: Math.round((autoAmount - amount) * 100) / 100
+          });
+        }
       }
-      setShowClaimForm(false);
-      setEditClaimId(null);
-      await loadAll();
     } catch (err) { console.error(err); }
+  }
+
+  async function confirmReliquat(create: boolean) {
+    if (create && pendingReliquat) {
+      try {
+        await api.addReliquat({
+          originReclamationId: pendingReliquat.claimId,
+          periodStart: pendingReliquat.moisDebut,
+          periodEnd: pendingReliquat.moisFin,
+          initialAmount: pendingReliquat.amount,
+          remainingAmount: pendingReliquat.amount,
+          status: 'active'
+        });
+        await loadAll();
+      } catch (err) { console.error(err); }
+    }
+    setPendingReliquat(null);
   }
 
   async function closeClaim(id: string) {
@@ -157,7 +231,7 @@ export function PageReclamations() {
     if (!confirm('Supprimer cette réclamation et tous ses paiements ?')) return;
     try {
       await api.deleteReclamation(id);
-      setSelectedId(null);
+      setSelectedClaimId(null);
       await loadAll();
     } catch (err) { console.error(err); }
   }
@@ -165,7 +239,57 @@ export function PageReclamations() {
   async function clearAllClaims() {
     try {
       await api.clearAllReclamations();
-      setSelectedId(null);
+      setSelectedClaimId(null);
+      await loadAll();
+    } catch (err) { console.error(err); }
+  }
+
+  // --- Reliquat actions ---
+  async function abandonReliquat(id: string) {
+    if (!confirm('Marquer ce reliquat comme abandonné ?')) return;
+    try {
+      await api.updateReliquat(id, { status: 'abandoned' });
+      await loadAll();
+    } catch (err) { console.error(err); }
+  }
+
+  async function deleteReliquatItem(id: string) {
+    if (!confirm('Supprimer ce reliquat ?')) return;
+    try {
+      await api.deleteReliquat(id);
+      setSelectedReliquatId(null);
+      await loadAll();
+    } catch (err) { console.error(err); }
+  }
+
+  async function submitClaimFromReliquat(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedReliquat) return;
+    try {
+      const amount = parseFloat(claimFromReliquatAmount);
+      const created = await api.addReclamation({
+        moisDebut: selectedReliquat.periodStart,
+        moisFin: selectedReliquat.periodEnd,
+        dateCreation: TODAY,
+        statut: 'ouverte',
+        montantReclame: amount,
+        description: 'Depuis reliquat'
+      });
+      const diff = Math.round((selectedReliquat.remainingAmount - amount) * 100) / 100;
+      await api.updateReliquat(selectedReliquat.id, { status: 'closed' });
+      if (diff > 0.01) {
+        await api.addReliquat({
+          originReclamationId: created.id,
+          periodStart: selectedReliquat.periodStart,
+          periodEnd: selectedReliquat.periodEnd,
+          initialAmount: diff,
+          remainingAmount: diff,
+          status: 'active'
+        });
+      }
+      setShowClaimFromReliquat(false);
+      setSelectedReliquatId(null);
+      selectClaim(created.id);
       await loadAll();
     } catch (err) { console.error(err); }
   }
@@ -185,12 +309,12 @@ export function PageReclamations() {
 
   async function submitPayment(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedId) return;
+    if (!selectedClaimId) return;
     try {
       if (editPaymentId) {
         await api.updatePayment(editPaymentId, { date: paymentForm.date, amount: parseFloat(paymentForm.amount), comment: paymentForm.comment });
       } else {
-        await api.addPayment({ claimId: selectedId, date: paymentForm.date, amount: parseFloat(paymentForm.amount), comment: paymentForm.comment });
+        await api.addPayment({ claimId: selectedClaimId, date: paymentForm.date, amount: parseFloat(paymentForm.amount), comment: paymentForm.comment });
       }
       setShowPaymentForm(false);
       setEditPaymentId(null);
@@ -212,7 +336,8 @@ export function PageReclamations() {
     { id: 'toutes', label: 'Toutes' },
     { id: 'ouverte', label: 'Ouvertes' },
     { id: 'prete_a_clore', label: 'Prêtes à clore' },
-    { id: 'cloturee', label: 'Cloturées' }
+    { id: 'cloturee', label: 'Cloturées' },
+    { id: 'reliquat', label: 'Reliquats' }
   ];
 
   return (
@@ -225,41 +350,59 @@ export function PageReclamations() {
           onCancel={() => setShowConfirmClear(false)}
         />
       )}
+
+      {/* Prompt reliquat */}
+      {pendingReliquat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h2 className="text-sm font-bold text-slate-800 mb-2">Différence non réclamée</h2>
+            <p className="text-xs text-slate-500 mb-4">
+              Le montant réclamé est inférieur au déficit calculé.<br />
+              Différence : <span className="font-semibold text-amber-700">{formatEuros(pendingReliquat.amount)}</span>
+            </p>
+            <p className="text-xs text-slate-600 mb-4">Que faire de cette différence ?</p>
+            <div className="flex gap-2">
+              <button onClick={() => confirmReliquat(true)}
+                className="flex-1 py-2 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600">
+                Créer un reliquat
+              </button>
+              <button onClick={() => confirmReliquat(false)}
+                className="flex-1 py-2 text-xs font-semibold border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50">
+                Abandonner
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Colonne gauche — liste */}
       <div className="w-80 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col">
-        {/* Header liste */}
         <div className="p-4 border-b border-slate-100 space-y-3">
-          <button
-            onClick={openNewClaim}
-            className="w-full py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-          >
+          <button onClick={openNewClaim}
+            className="w-full py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
             + Nouvelle réclamation
           </button>
           {claims.length > 0 && (
-            <button
-              onClick={() => setShowConfirmClear(true)}
-              className="w-full py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-            >
+            <button onClick={() => setShowConfirmClear(true)}
+              className="w-full py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
               Tout supprimer
             </button>
           )}
-          {/* Filtres */}
           <div className="flex gap-1 flex-wrap">
             {FILTERS.map(f => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
+              <button key={f.id} onClick={() => setFilter(f.id)}
                 className={`px-2 py-1 text-[10px] font-semibold rounded-md transition-colors ${
-                  filter === f.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
+                  filter === f.id
+                    ? f.id === 'reliquat' ? 'bg-amber-400 text-white' : 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}>
                 {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Formulaire réclamation (inline) */}
+        {/* Formulaire réclamation */}
         {showClaimForm && (
           <div className="p-4 border-b border-slate-200 bg-blue-50">
             <p className="text-xs font-semibold text-blue-800 mb-3">{editClaimId ? 'Modifier' : 'Nouvelle réclamation'}</p>
@@ -307,56 +450,76 @@ export function PageReclamations() {
           </div>
         )}
 
-        {/* Liste claims */}
+        {/* Liste mixte */}
         <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-          {filtered.length === 0 && (
-            <p className="text-center text-slate-400 text-sm py-8">Aucune réclamation</p>
+          {listItems.length === 0 && (
+            <p className="text-center text-slate-400 text-sm py-8">Aucun élément</p>
           )}
-          {filtered.map(c => {
-            const received = getReceived(c.id);
-            const remaining = c.montantReclame - received;
-            const status = computeStatus(c, received);
-            const isSelected = c.id === selectedId;
-            return (
-              <button
-                key={c.id}
-                onClick={() => { setSelectedId(c.id); setShowPaymentForm(false); }}
-                className={`w-full text-left p-4 hover:bg-slate-50 transition-colors ${isSelected ? 'bg-blue-50 border-l-2 border-blue-600' : ''}`}
-              >
-                <div className="flex items-start justify-between mb-1">
-                  <span className="text-xs font-semibold text-slate-700">{c.reference}</span>
-                  <StatusBadge status={status} />
-                </div>
-                <p className="text-[10px] text-slate-500 mb-2">
-                  {formatMoisLabel(c.moisDebut)} → {formatMoisLabel(c.moisFin)}
-                </p>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">Réclamé: <span className="font-medium text-slate-700">{formatEuros(c.montantReclame)}</span></span>
-                  <span className={remaining > 0.01 ? 'text-red-600 font-semibold' : 'text-emerald-600 font-semibold'}>
-                    {remaining > 0.01 ? `-${formatEuros(remaining)}` : 'Soldé'}
-                  </span>
-                </div>
-              </button>
-            );
+          {listItems.map(item => {
+            if (item.kind === 'claim') {
+              const c = item.data;
+              const received = getReceived(c.id);
+              const remaining = c.montantReclame - received;
+              const status = computeStatus(c, received);
+              const isSelected = c.id === selectedClaimId;
+              return (
+                <button key={`claim-${c.id}`} onClick={() => selectClaim(c.id)}
+                  className={`w-full text-left p-4 hover:bg-slate-50 transition-colors ${isSelected ? 'bg-blue-50 border-l-2 border-blue-600' : ''}`}>
+                  <div className="flex items-start justify-between mb-1">
+                    <span className="text-xs font-semibold text-slate-700">{c.reference}</span>
+                    <StatusBadge status={status} />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mb-2">{formatMoisLabel(c.moisDebut)} → {formatMoisLabel(c.moisFin)}</p>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500">Réclamé: <span className="font-medium text-slate-700">{formatEuros(c.montantReclame)}</span></span>
+                    <span className={remaining > 0.01 ? 'text-red-600 font-semibold' : 'text-emerald-600 font-semibold'}>
+                      {remaining > 0.01 ? `-${formatEuros(remaining)}` : 'Soldé'}
+                    </span>
+                  </div>
+                </button>
+              );
+            } else {
+              const r = item.data;
+              const isSelected = r.id === selectedReliquatId;
+              const originClaim = claims.find(c => c.id === r.originReclamationId);
+              return (
+                <button key={`reliquat-${r.id}`} onClick={() => selectReliquat(r.id)}
+                  style={{ backgroundColor: isSelected ? '#FFF0A0' : '#FFF7D6' }}
+                  className={`w-full text-left p-4 hover:opacity-80 transition-opacity ${isSelected ? 'border-l-2 border-amber-500' : ''}`}>
+                  <div className="flex items-start justify-between mb-1">
+                    <span className="text-xs font-semibold text-amber-800">
+                      Reliquat {originClaim ? `de ${originClaim.reference}` : ''}
+                    </span>
+                    <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                      r.status === 'closed' ? 'bg-slate-100 text-slate-500' :
+                      r.status === 'abandoned' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {r.status === 'closed' ? 'Clos' : r.status === 'abandoned' ? 'Abandonné' : 'Actif'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-amber-700 mb-2">{formatMoisLabel(r.periodStart)} → {formatMoisLabel(r.periodEnd)}</p>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-amber-700">Initial: <span className="font-medium">{formatEuros(r.initialAmount)}</span></span>
+                    <span className="text-amber-800 font-semibold">Reste: {formatEuros(r.remainingAmount)}</span>
+                  </div>
+                </button>
+              );
+            }
           })}
         </div>
       </div>
 
       {/* Colonne droite — détail */}
       <div className="flex-1 overflow-y-auto bg-gray-50">
-        {!selectedClaim ? (
-          <div className="flex items-center justify-center h-full text-slate-400 text-sm">
-            Sélectionnez une réclamation
-          </div>
-        ) : (() => {
+
+        {/* Détail réclamation */}
+        {selectedClaim && (() => {
           const received = getReceived(selectedClaim.id);
           const remaining = selectedClaim.montantReclame - received;
           const status = computeStatus(selectedClaim, received);
           const pct = selectedClaim.montantReclame > 0 ? Math.min(100, Math.round((received / selectedClaim.montantReclame) * 100)) : 0;
-
           return (
             <div className="p-6 space-y-5 max-w-3xl">
-              {/* Résumé */}
               <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -379,8 +542,6 @@ export function PageReclamations() {
                     <button onClick={() => deleteClaim(selectedClaim.id)} className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50">Supprimer</button>
                   </div>
                 </div>
-
-                {/* Chiffres */}
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="bg-slate-50 rounded-lg p-3">
                     <p className="text-[10px] text-slate-400 uppercase mb-1">Réclamé</p>
@@ -395,8 +556,6 @@ export function PageReclamations() {
                     <p className={`text-lg font-bold ${remaining > 0.01 ? 'text-red-700' : 'text-emerald-700'}`}>{formatEuros(remaining)}</p>
                   </div>
                 </div>
-
-                {/* Barre progression */}
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                 </div>
@@ -408,13 +567,11 @@ export function PageReclamations() {
                 <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-700">Paiements reçus</h3>
                   {status !== 'cloturee' && (
-                    <button onClick={openNewPayment} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                    <button onClick={openNewPayment} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">
                       + Ajouter
                     </button>
                   )}
                 </div>
-
-                {/* Formulaire paiement */}
                 {showPaymentForm && (
                   <div className="px-5 py-4 bg-blue-50 border-b border-blue-100">
                     <form onSubmit={submitPayment} className="flex items-end gap-3 flex-wrap">
@@ -443,7 +600,6 @@ export function PageReclamations() {
                     </form>
                   </div>
                 )}
-
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">
@@ -455,9 +611,7 @@ export function PageReclamations() {
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {selectedPayments.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="text-center py-6 text-slate-400 text-xs">Aucun paiement enregistré</td>
-                      </tr>
+                      <tr><td colSpan={4} className="text-center py-6 text-slate-400 text-xs">Aucun paiement enregistré</td></tr>
                     )}
                     {selectedPayments.map(p => (
                       <tr key={p.id} className="hover:bg-slate-50">
@@ -478,6 +632,109 @@ export function PageReclamations() {
             </div>
           );
         })()}
+
+        {/* Détail reliquat */}
+        {selectedReliquat && (() => {
+          const originClaim = claims.find(c => c.id === selectedReliquat.originReclamationId);
+          return (
+            <div className="p-6 space-y-5 max-w-3xl">
+              <div className="rounded-xl border shadow-sm p-5" style={{ backgroundColor: '#FFF7D6', borderColor: '#F6D860' }}>
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h2 className="text-base font-bold text-amber-900">Reliquat</h2>
+                      <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                        selectedReliquat.status === 'closed' ? 'bg-slate-200 text-slate-600' :
+                        selectedReliquat.status === 'abandoned' ? 'bg-red-100 text-red-700' : 'bg-amber-200 text-amber-800'
+                      }`}>
+                        {selectedReliquat.status === 'closed' ? 'Clos' : selectedReliquat.status === 'abandoned' ? 'Abandonné' : 'Actif'}
+                      </span>
+                    </div>
+                    {originClaim && (
+                      <p className="text-xs text-amber-700">
+                        Issu de <button onClick={() => selectClaim(originClaim.id)} className="underline font-semibold">{originClaim.reference}</button>
+                      </p>
+                    )}
+                    <p className="text-xs text-amber-700 mt-1">
+                      {formatMoisLabel(selectedReliquat.periodStart)} → {formatMoisLabel(selectedReliquat.periodEnd)}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    {selectedReliquat.status === 'active' && (
+                      <button onClick={() => abandonReliquat(selectedReliquat.id)}
+                        className="px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-white">
+                        Abandonner
+                      </button>
+                    )}
+                    <button onClick={() => deleteReliquatItem(selectedReliquat.id)}
+                      className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50">
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-5">
+                  <div className="bg-white/60 rounded-lg p-3">
+                    <p className="text-[10px] text-amber-600 uppercase mb-1">Montant initial</p>
+                    <p className="text-lg font-bold text-amber-900">{formatEuros(selectedReliquat.initialAmount)}</p>
+                  </div>
+                  <div className="bg-white/60 rounded-lg p-3">
+                    <p className="text-[10px] text-amber-600 uppercase mb-1">Reste à réclamer</p>
+                    <p className="text-lg font-bold text-amber-900">{formatEuros(selectedReliquat.remainingAmount)}</p>
+                  </div>
+                </div>
+
+                {selectedReliquat.status === 'active' && (
+                  <>
+                    {!showClaimFromReliquat ? (
+                      <button
+                        onClick={() => { setShowClaimFromReliquat(true); setClaimFromReliquatAmount(selectedReliquat.remainingAmount.toFixed(2)); }}
+                        className="w-full py-2 text-sm font-semibold rounded-lg text-white"
+                        style={{ backgroundColor: '#6B2D8B' }}>
+                        Créer une réclamation depuis ce reliquat
+                      </button>
+                    ) : (
+                      <form onSubmit={submitClaimFromReliquat} className="bg-white/70 rounded-lg p-4 space-y-3">
+                        <p className="text-xs font-semibold text-amber-900">Nouvelle réclamation depuis reliquat</p>
+                        <div className="grid grid-cols-2 gap-3 text-xs text-amber-700">
+                          <div>
+                            <p className="text-[10px] mb-0.5">Période (fixe)</p>
+                            <p className="font-medium">{formatMoisLabel(selectedReliquat.periodStart)} → {formatMoisLabel(selectedReliquat.periodEnd)}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] mb-0.5">Max réclamable</p>
+                            <p className="font-bold">{formatEuros(selectedReliquat.remainingAmount)}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-amber-700 block mb-1">Montant à réclamer</label>
+                          <input type="number" step="0.01" min="0.01" max={selectedReliquat.remainingAmount}
+                            value={claimFromReliquatAmount} onChange={e => setClaimFromReliquatAmount(e.target.value)}
+                            className="w-full text-xs border border-amber-300 rounded px-2 py-1.5 bg-white" required />
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="submit" className="flex-1 py-2 text-xs font-semibold text-white rounded-lg" style={{ backgroundColor: '#6B2D8B' }}>
+                            Créer
+                          </button>
+                          <button type="button" onClick={() => setShowClaimFromReliquat(false)}
+                            className="flex-1 py-2 text-xs font-medium border border-amber-300 text-amber-800 rounded-lg hover:bg-white">
+                            Annuler
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {!selectedClaim && !selectedReliquat && (
+          <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+            Sélectionnez une réclamation ou un reliquat
+          </div>
+        )}
       </div>
     </div>
   );

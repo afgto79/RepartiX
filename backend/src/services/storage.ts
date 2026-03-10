@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { Releve, Regularisation, Reclamation, Payment, DataStore } from '../types/releve';
+import { Releve, Regularisation, Reclamation, Payment, Reliquat, DataStore } from '../types/releve';
 
 const DATA_FILE = path.join(__dirname, '../data/releves.json');
 
@@ -22,6 +22,10 @@ export async function loadData(): Promise<DataStore> {
     if (!data.payments) {
       data.payments = [];
     }
+    // Migration: ajouter reliquats si absent
+    if (!data.reliquats) {
+      data.reliquats = [];
+    }
     return data;
   } catch {
     const emptyData: DataStore = {
@@ -29,6 +33,7 @@ export async function loadData(): Promise<DataStore> {
       regularisations: [],
       reclamations: [],
       payments: [],
+      reliquats: [],
       metadata: {
         lastUpdated: new Date().toISOString(),
         totalReleves: 0
@@ -273,6 +278,46 @@ export async function deletePayment(id: string): Promise<boolean> {
   const initialLength = data.payments.length;
   data.payments = data.payments.filter(p => p.id !== id);
   if (data.payments.length < initialLength) {
+    await saveData(data);
+    return true;
+  }
+  return false;
+}
+
+// --- Reliquats CRUD ---
+
+export async function getReliquats(status?: string): Promise<Reliquat[]> {
+  const data = await loadData();
+  if (status) return data.reliquats.filter(r => r.status === status);
+  return data.reliquats;
+}
+
+export async function addReliquat(fields: Omit<Reliquat, 'id' | 'createdAt'>): Promise<Reliquat> {
+  const data = await loadData();
+  const newReliquat: Reliquat = {
+    id: uuidv4(),
+    ...fields,
+    createdAt: new Date().toISOString()
+  };
+  data.reliquats.push(newReliquat);
+  await saveData(data);
+  return newReliquat;
+}
+
+export async function updateReliquat(id: string, updates: Partial<Omit<Reliquat, 'id' | 'createdAt'>>): Promise<Reliquat | null> {
+  const data = await loadData();
+  const index = data.reliquats.findIndex(r => r.id === id);
+  if (index === -1) return null;
+  data.reliquats[index] = { ...data.reliquats[index], ...updates };
+  await saveData(data);
+  return data.reliquats[index];
+}
+
+export async function deleteReliquat(id: string): Promise<boolean> {
+  const data = await loadData();
+  const initialLength = data.reliquats.length;
+  data.reliquats = data.reliquats.filter(r => r.id !== id);
+  if (data.reliquats.length < initialLength) {
     await saveData(data);
     return true;
   }

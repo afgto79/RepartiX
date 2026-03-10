@@ -87,6 +87,17 @@ export interface Reclamation {
   createdAt: string;
 }
 
+export interface Reliquat {
+  id: string;
+  originReclamationId: string;
+  periodStart: string;
+  periodEnd: string;
+  initialAmount: number;
+  remainingAmount: number;
+  status: 'active' | 'closed' | 'abandoned';
+  createdAt: string;
+}
+
 export interface Payment {
   id: string;
   claimId: string;
@@ -328,5 +339,38 @@ export const api = {
     const res = await fetch(`${API_BASE}/releves`);
     if (!res.ok) throw new Error('Erreur chargement releves');
     return res.json();
+  },
+
+  // --- Reliquats ---
+
+  async getReliquats(): Promise<Reliquat[]> {
+    const res = await fetch(`${API_BASE}/reliquats`);
+    if (!res.ok) throw new Error('Erreur chargement reliquats');
+    return res.json();
+  },
+
+  async addReliquat(data: Omit<Reliquat, 'id' | 'createdAt'>): Promise<Reliquat> {
+    const res = await fetch(`${API_BASE}/reliquats`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur création reliquat');
+    return res.json();
+  },
+
+  async updateReliquat(id: string, data: Partial<Omit<Reliquat, 'id' | 'createdAt'>>): Promise<Reliquat> {
+    const res = await fetch(`${API_BASE}/reliquats/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur modification reliquat');
+    return res.json();
+  },
+
+  async deleteReliquat(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/reliquats/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression reliquat');
   }
 };
