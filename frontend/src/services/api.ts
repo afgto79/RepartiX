@@ -264,7 +264,7 @@ export const api = {
 
   async addReclamation(data: {
     moisDebut: string; moisFin: string; dateCreation: string;
-    statut: string; montantReclame: number; description: string;
+    statut: string; montantReclame: number; description: string; sourceReliquatId?: string;
   }): Promise<Reclamation> {
     const res = await fetch(`${API_BASE}/reclamations`, {
       method: 'POST',

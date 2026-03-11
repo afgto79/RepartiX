@@ -64,6 +64,7 @@ export async function saveReleve(releve: Partial<Releve>): Promise<Releve> {
     annee: 0,
     mois: 0,
     decade: 1,
+    debitHT: null,
     totalNetHT: 0,
     totalTTC: 0,
     remiseAbnMargeHT: null,

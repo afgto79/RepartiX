@@ -38,7 +38,7 @@ export function DashboardBilan() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({
     moisDebut: '', moisFin: '', dateCreation: new Date().toISOString().slice(0, 10),
-    statut: 'en_attente' as const, montantReclame: '', description: ''
+    statut: 'en_attente' as Reclamation['statut'], montantReclame: '', description: ''
   });
 
   useEffect(() => { loadAllData(); }, []);

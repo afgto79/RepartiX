@@ -7,7 +7,7 @@ if (pdfjsLib.GlobalWorkerOptions) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 }
 
-interface TextItem {
+interface PdfTextItem {
   str: string;
   transform: number[];
 }
@@ -30,8 +30,8 @@ export async function parsePDF(filePath: string): Promise<Partial<Releve> | null
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const content = await page.getTextContent();
-      const pageText = content.items
-        .filter((item): item is TextItem => 'str' in item)
+      const pageText = (content.items as unknown as PdfTextItem[])
+        .filter(item => typeof item.str === 'string')
         .map(item => item.str)
         .join(' ');
       fullText += pageText + '\n';
