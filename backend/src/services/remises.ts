@@ -41,7 +41,8 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
   const decade3 = decades.find(d => d.decade === 3);
 
   // Frais generaux = D3 du mois M (pas de decalage, les frais de M sont dans D3 M)
-  const fraisGeneraux = Math.abs(decade3?.fraisGenerauxBrutHT ?? 0);
+  // Utilise fraisGenerauxNetHT si disponible (PDFs reimportes), sinon fallback sur brut
+  const fraisGeneraux = Math.abs(decade3?.fraisGenerauxNetHT ?? decade3?.fraisGenerauxBrutHT ?? 0);
 
   // Assiette = Débit HT mensuel - Remises partenariats (D3, cumulatif) - Avoirs commerciaux (D3, cumulatif) - Frais généraux
   // (la remise de 3% s'applique uniquement sur les marchandises, pas sur les frais)

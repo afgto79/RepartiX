@@ -11,6 +11,7 @@ export interface Releve {
   remisesPartenariatsHT: number | null;
   avoirsCommerciauxHT: number | null;
   fraisGenerauxBrutHT: number | null;
+  fraisGenerauxNetHT: number | null;
   importedAt: string;
   source: string;
   hash: string;
@@ -23,7 +24,7 @@ export interface AnalyseRemise {
   totalHTMensuel: number;
   remiseAttendue: number;
   remiseReelle: number;    // = annoncée (brute, avant frais)
-  fraisGeneraux: number;   // frais généraux brut HT déduits par le répartiteur
+  fraisGeneraux: number;   // frais généraux net HT déduits par le répartiteur
   reversee: number;        // = annoncée - frais (net reversé)
   delta: number;           // = reversée - attendue (négatif = manque à gagner)
   deltaPourcent: number;

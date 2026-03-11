@@ -165,14 +165,16 @@ function extractFields(text: string): Partial<Releve> {
 
   // === 7. FRAIS GENERAUX ===
   // Texte: "Total frais généraux   62,22   62,22   ..."
-  // Premier nombre = Montant brut HT
-  const fraisRegex = /Total\s+frais\s+g[eé]n[eé]raux\s+([\d][\d\s]*[,\.]\d{2})/i;
+  // Premier nombre = Montant brut HT, deuxième = Montant net HT
+  const fraisRegex = /Total\s+frais\s+g[eé]n[eé]raux\s+([\d][\d\s]*[,\.]\d{2})\s+([\d][\d\s]*[,\.]\d{2})/i;
   const fraisMatch = text.match(fraisRegex);
   if (fraisMatch) {
     fields.fraisGenerauxBrutHT = parseMonetaire(fraisMatch[1]);
-    console.info(`[PDF Parser] Frais généraux brut HT: ${fields.fraisGenerauxBrutHT}`);
+    fields.fraisGenerauxNetHT = parseMonetaire(fraisMatch[2]);
+    console.info(`[PDF Parser] Frais généraux brut HT: ${fields.fraisGenerauxBrutHT}, net HT: ${fields.fraisGenerauxNetHT}`);
   } else {
     fields.fraisGenerauxBrutHT = null;
+    fields.fraisGenerauxNetHT = null;
   }
 
   if (errors.length > 0) {

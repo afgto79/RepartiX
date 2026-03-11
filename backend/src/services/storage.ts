@@ -69,6 +69,8 @@ export async function saveReleve(releve: Partial<Releve>): Promise<Releve> {
     remiseAbnMargeHT: null,
     remisesPartenariatsHT: null,
     avoirsCommerciauxHT: null,
+    fraisGenerauxBrutHT: null,
+    fraisGenerauxNetHT: null,
     importedAt: new Date().toISOString(),
     source: '',
     hash: '',
