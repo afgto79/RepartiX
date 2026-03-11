@@ -3,7 +3,7 @@ import { api, ReleveRaw, AnalyseRemise, Reclamation } from '../services/api';
 import { formatEuros, formatMoisLabel } from '../utils/formatters';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
-type Tab = 'decades' | 'mois';
+type Tab = 'decades' | 'mois' | 'regles';
 
 function getMoisRange(debut: string, fin: string): string[] {
   const result: string[] = [];
@@ -150,7 +150,7 @@ export function PageDonnees() {
       )}
       {/* Tabs */}
       <div className="flex gap-1 mb-5 border-b border-slate-200">
-        {(['decades', 'mois'] as Tab[]).map(t => (
+        {(['decades', 'mois', 'regles'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -158,7 +158,7 @@ export function PageDonnees() {
               tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            {t === 'decades' ? 'Décades' : 'Mois'}
+            {t === 'decades' ? 'Décades' : t === 'mois' ? 'Mois' : 'Règles de calcul'}
           </button>
         ))}
       </div>
@@ -338,6 +338,119 @@ export function PageDonnees() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Tab Règles de calcul */}
+      {tab === 'regles' && (
+        <div className="space-y-5 max-w-3xl">
+
+          {/* Lexique */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-sm font-semibold text-slate-700">Lexique</h2>
+            </div>
+            <div className="divide-y divide-slate-50">
+              {[
+                { terme: 'Décade', def: 'Période de facturation d\'environ 10 jours. Chaque mois est divisé en 3 décades (D1, D2, D3). Les relevés Alliance Healthcare sont émis par décade.' },
+                { terme: 'Débit HT', def: 'Montant total des achats hors taxes facturés sur une décade. C\'est la base brute avant toute déduction.' },
+                { terme: 'Remises partenariats (RP)', def: 'Remises accordées dans le cadre de contrats spécifiques avec des laboratoires ou partenaires. Valeur cumulative du mois, lue en D3.' },
+                { terme: 'Avoirs commerciaux (AC)', def: 'Avoirs accordés à titre commercial (retours, gestes commerciaux, etc.). Valeur cumulative du mois, lue en D3.' },
+                { terme: 'Frais généraux', def: 'Frais de service facturés par le répartiteur (transport, logistique, etc.). Ils sont inclus dans le débit HT mais ne font pas l\'objet de la remise commerciale.' },
+                { terme: 'Remise ABN / Marge', def: 'Remise contractuelle de 3% versée par Alliance Healthcare sur les achats de marchandises. C\'est la ligne "Remise Abn Marge HT" dans les relevés.' },
+              ].map(({ terme, def }) => (
+                <div key={terme} className="px-5 py-3 flex gap-4">
+                  <span className="text-xs font-semibold text-slate-700 w-44 shrink-0 pt-0.5">{terme}</span>
+                  <span className="text-xs text-slate-500 leading-relaxed">{def}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Remise attendue */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-sm font-semibold text-slate-700">Remise attendue</h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">Ce que le répartiteur aurait dû verser pour le mois M</p>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
+                <p>Assiette = Débit HT (D1+D2+D3) − Remises partenariats (D3) − Avoirs commerciaux (D3) − Frais généraux (D3)</p>
+                <p className="text-[#6B2D8B] font-semibold">Remise attendue = Assiette × 3 %</p>
+              </div>
+              <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
+                <li>Le débit HT est la somme des 3 décades du mois.</li>
+                <li>Les remises partenariats, avoirs commerciaux et frais généraux sont lus dans la <strong>D3 du mois M</strong> (valeurs cumulatives mensuelles).</li>
+                <li>Les frais généraux sont exclus de l'assiette car la remise de 3% ne s'applique que sur les marchandises.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Remise annoncée */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-sm font-semibold text-slate-700">Remise annoncée</h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">Ce que le répartiteur a effectivement annoncé pour le mois M</p>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700">
+                <p className="text-[#6B2D8B] font-semibold">Remise annoncée (mois M) = Remise ABN Marge HT de la D3 du mois M+1</p>
+              </div>
+              <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
+                <li><strong>Règle de décalage Alliance Healthcare :</strong> la remise contractuelle cumulée annoncée dans la D3 d'un mois concerne le mois précédent.</li>
+                <li>Exemple : la remise annoncée pour janvier 2026 se trouve dans la D3 de février 2026.</li>
+                <li>Si la D3 du mois suivant n'est pas encore importée, le statut du mois est <span className="text-amber-600 font-semibold">Incomplet</span>.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Reversée & Delta */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-sm font-semibold text-slate-700">Reversée & Delta</h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">Montant net effectivement reçu et écart par rapport à l'attendu</p>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
+                <p>Reversée = Remise annoncée − Frais généraux</p>
+                <p className="text-[#6B2D8B] font-semibold">Delta = Reversée − Remise attendue</p>
+              </div>
+              <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
+                <li>La <strong>Reversée</strong> est le montant net réellement crédité après déduction des frais de service.</li>
+                <li>Un <strong>Delta positif</strong> signifie que le répartiteur a versé plus que prévu (situation favorable).</li>
+                <li>Un <strong>Delta négatif</strong> signifie un manque à gagner : le répartiteur a sous-versé par rapport au contrat.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Statuts */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-sm font-semibold text-slate-700">Statuts</h2>
+            </div>
+            <div className="divide-y divide-slate-50">
+              {[
+                {
+                  badge: <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-700">OK</span>,
+                  def: 'Les 3 décades sont importées, la D3 du mois suivant est disponible, et le delta est ≥ 0 (ou inférieur à 0,01 € d\'écart). Aucune action requise.'
+                },
+                {
+                  badge: <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">Incomplet</span>,
+                  def: 'Il manque au moins une décade pour ce mois, ou la D3 du mois suivant n\'est pas encore importée. Le calcul ne peut pas être finalisé.'
+                },
+                {
+                  badge: <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-100 text-red-700">Retard</span>,
+                  def: 'Les données sont complètes mais le delta est négatif (< −0,01 €) : le répartiteur a versé moins que le montant contractuellement dû. Une réclamation peut être créée.'
+                },
+              ].map(({ badge, def }, i) => (
+                <div key={i} className="px-5 py-3 flex items-start gap-4">
+                  <div className="w-24 shrink-0 pt-0.5">{badge}</div>
+                  <span className="text-xs text-slate-500 leading-relaxed">{def}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
       )}
     </div>
