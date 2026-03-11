@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { api, AnalyseRemise, Reclamation, Payment, CumulResponse } from '../services/api';
 import { formatEuros, formatMoisLabel } from '../utils/formatters';
+import { exportYearlyPDF } from '../utils/pdfExport';
 
 type Page = 'accueil' | 'reclamations' | 'donnees';
 
@@ -278,7 +279,20 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-700">Récapitulatif mensuel — {annee}</h2>
-          <span className="text-xs text-slate-400">{analyses.length} mois</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-400">{analyses.length} mois</span>
+            {analyses.length > 0 && (
+              <button
+                onClick={() => exportYearlyPDF(annee, analyses, payments)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                Export PDF
+              </button>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
