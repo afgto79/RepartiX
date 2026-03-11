@@ -63,8 +63,8 @@ export function exportYearlyPDF(annee: number, analyses: AnalyseRemise[], paymen
   const kpis = [
     { label: `Reste à percevoir`, value: fmt(resteAPercevoir), accent: true },
     { label: `Récupéré via réclamations`, value: fmt(totalRecupere), accent: false },
-    { label: `Montant reversé`, value: fmt(totReversee), accent: false },
     { label: `Delta total`, value: fmt(totDelta), accent: false },
+    { label: `Montant reversé`, value: fmt(totReversee), accent: false },
   ];
 
   const kpiW = (contentW - 9) / 4;
@@ -80,9 +80,12 @@ export function exportYearlyPDF(annee: number, analyses: AnalyseRemise[], paymen
       doc.rect(x, y, kpiW, 22, 'FD');
       doc.setTextColor(100, 116, 139);
     }
-    doc.setFontSize(6.5);
+    // Taille de police adaptée à la longueur du label pour éviter le débordement
+    const labelText = (kpi.label + ` — ${annee}`).toUpperCase();
+    const labelFontSize = labelText.length > 28 ? 5.5 : 6.5;
+    doc.setFontSize(labelFontSize);
     doc.setFont('helvetica', 'normal');
-    doc.text((kpi.label + ` — ${annee}`).toUpperCase(), x + 3, y + 6);
+    doc.text(labelText, x + 3, y + 6);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text(kpi.value, x + 3, y + 16);
@@ -202,7 +205,7 @@ export function exportYearlyPDF(annee: number, analyses: AnalyseRemise[], paymen
       const gy = zeroLineY + t * barAreaH;
       const isZero = t === 0;
       doc.setDrawColor(isZero ? 100 : 203, isZero ? 116 : 213, isZero ? 139 : 225);
-      doc.setLineWidth(isZero ? 0.5 : 0.2);
+      doc.setLineWidth(0.2);
       doc.line(barZoneX, gy, chartX + contentW - 1, gy);
       doc.setFontSize(5);
       doc.setFont('helvetica', 'normal');
