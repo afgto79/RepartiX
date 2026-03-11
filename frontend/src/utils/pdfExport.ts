@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { AnalyseRemise, Payment } from '../services/api';
+import { AnalyseRemise, Payment, Reclamation } from '../services/api';
 
 const MOIS_COURTS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
@@ -17,7 +17,7 @@ function fmt(n: number): string {
     .replace(/\u00a0/g, ' ') + ' \u20ac';
 }
 
-export function exportYearlyPDF(annee: number, analyses: AnalyseRemise[], payments: Payment[] = []): void {
+export function exportYearlyPDF(annee: number, analyses: AnalyseRemise[], payments: Payment[] = [], reclamations: Reclamation[] = []): void {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageW = 210;
   const marginL = 20;
@@ -54,8 +54,12 @@ export function exportYearlyPDF(annee: number, analyses: AnalyseRemise[], paymen
   const totReversee = analyses.reduce((s, a) => s + a.reversee, 0);
   const totFrais = analyses.reduce((s, a) => s + a.fraisGeneraux, 0);
   const totDelta = analyses.reduce((s, a) => s + a.delta, 0);
+  // Paiements liés aux réclamations dont la période est dans l'année N
+  const claimIdsForYear = new Set(
+    reclamations.filter(r => r.moisDebut.startsWith(String(annee))).map(r => r.id)
+  );
   const totalRecupere = payments
-    .filter(p => p.date.startsWith(String(annee)))
+    .filter(p => claimIdsForYear.has(p.claimId))
     .reduce((s, p) => s + p.amount, 0);
   const deficitBrut = totDelta < 0 ? Math.abs(totDelta) : 0;
   const resteAPercevoir = Math.max(0, deficitBrut - totalRecupere);

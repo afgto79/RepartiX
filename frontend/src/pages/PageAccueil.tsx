@@ -283,7 +283,7 @@ export function PageAccueil({ onNavigate }: PageAccueilProps) {
             <span className="text-xs text-slate-400">{analyses.length} mois</span>
             {analyses.length > 0 && (
               <button
-                onClick={() => exportYearlyPDF(annee, analyses, payments)}
+                onClick={() => exportYearlyPDF(annee, analyses, payments, reclamations)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

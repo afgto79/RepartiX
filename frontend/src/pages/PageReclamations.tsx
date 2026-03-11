@@ -172,6 +172,11 @@ export function PageReclamations() {
 
   async function submitClaim(e: React.FormEvent) {
     e.preventDefault();
+    // Bloquer si la période couvre deux années différentes
+    if (claimForm.moisDebut && claimForm.moisFin &&
+        claimForm.moisDebut.split('-')[0] !== claimForm.moisFin.split('-')[0]) {
+      return; // le formulaire affiche déjà l'avertissement visuel
+    }
     try {
       const amount = parseFloat(claimForm.montantReclame);
       const data = {
@@ -417,6 +422,12 @@ export function PageReclamations() {
                     className="w-full text-xs border border-slate-200 rounded px-2 py-1" required />
                 </div>
               </div>
+              {claimForm.moisDebut && claimForm.moisFin &&
+               claimForm.moisDebut.split('-')[0] !== claimForm.moisFin.split('-')[0] && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+                  La période ne peut pas couvrir deux années différentes. Créez une réclamation par année.
+                </p>
+              )}
               <div>
                 <label className="text-[10px] text-slate-500">
                   Montant réclamé
