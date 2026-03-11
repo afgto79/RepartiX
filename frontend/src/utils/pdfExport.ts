@@ -157,51 +157,81 @@ export function exportYearlyPDF(annee: number, analyses: AnalyseRemise[], paymen
   y = ((doc as any).lastAutoTable?.finalY ?? y + 90) + 8;
 
   // === BAR CHART ===
-  if (y < 248 && analyses.length > 0) {
+  if (analyses.length > 0) {
+    // Nouvelle page si pas assez de place (besoin d'environ 85mm)
+    if (y > 205) {
+      doc.addPage();
+      y = 20;
+    }
+
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(71, 85, 105);
     doc.text('Delta mensuel', marginL, y);
-    y += 4;
+    y += 5;
 
-    const chartH = 42;
-    const chartW = contentW;
+    // Dimensions
+    const yAxisW = 20;          // largeur réservée aux labels de l'axe Y
+    const barAreaH = 60;        // 6 cm pour les barres
+    const padTop = 5;           // espace au-dessus de la ligne 0
+    const padBottom = 10;       // espace sous les barres pour les labels de mois
+    const chartH = padTop + barAreaH + padBottom;
+
     const chartX = marginL;
     const chartY = y;
+    const barZoneX = chartX + yAxisW;
+    const barZoneW = contentW - yAxisW;
+    const zeroLineY = chartY + padTop;         // ligne "0" en haut
+    const bottomBarY = zeroLineY + barAreaH;   // bas des barres
 
+    // Fond
     doc.setFillColor(248, 250, 252);
-    doc.rect(chartX, chartY, chartW, chartH, 'F');
+    doc.rect(chartX, chartY, contentW, chartH, 'F');
 
+    // Échelle
     const deltas = analyses.map(a => a.delta);
-    const maxAbs = Math.max(...deltas.map(d => Math.abs(d)), 0.01);
-    const barAreaH = chartH - 10;
-    const baseline = chartY + barAreaH / 2 + 3;
+    const maxAbs = Math.max(...deltas.map(d => Math.abs(d)), 1);
 
-    // Baseline
-    doc.setDrawColor(203, 213, 225);
-    doc.setLineWidth(0.25);
-    doc.line(chartX + 3, baseline, chartX + chartW - 3, baseline);
+    function fmtAxis(v: number): string {
+      if (v >= 1000) return (v / 1000).toFixed(1).replace('.', ',') + 'k';
+      return Math.round(v) + '';
+    }
 
-    const slotW = (chartW - 6) / analyses.length;
-    const barW = Math.max(slotW * 0.6, 3);
-    const barMaxH = (barAreaH / 2) - 2;
-
-    analyses.forEach((a, i) => {
-      const barH = Math.max((Math.abs(a.delta) / maxAbs) * barMaxH, 0.5);
-      const bx = chartX + 3 + i * slotW + (slotW - barW) / 2;
-
-      if (a.delta >= -0.01) {
-        doc.setFillColor(16, 185, 129); // green — OK
-        doc.rect(bx, baseline - barH, barW, barH, 'F');
-      } else {
-        doc.setFillColor(239, 68, 68); // red — shortfall
-        doc.rect(bx, baseline, barW, barH, 'F');
-      }
-
+    // Lignes de grille et labels axe Y : 0%, 25%, 50%, 75%, 100%
+    [0, 0.25, 0.5, 0.75, 1.0].forEach((t) => {
+      const gy = zeroLineY + t * barAreaH;
+      const isZero = t === 0;
+      doc.setDrawColor(isZero ? 100 : 203, isZero ? 116 : 213, isZero ? 139 : 225);
+      doc.setLineWidth(isZero ? 0.5 : 0.2);
+      doc.line(barZoneX, gy, chartX + contentW - 1, gy);
       doc.setFontSize(5);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(148, 163, 184);
-      doc.text(moisCourt(a.mois), bx + barW / 2, chartY + chartH - 2, { align: 'center' });
+      doc.setTextColor(100, 116, 139);
+      const label = isZero ? '0 €' : fmtAxis(t * maxAbs) + ' €';
+      doc.text(label, barZoneX - 2, gy + 1.5, { align: 'right' });
+    });
+
+    // Barres
+    const slotW = barZoneW / analyses.length;
+    const barW = Math.min(Math.max(slotW * 0.65, 2.5), 12);
+
+    analyses.forEach((a, i) => {
+      const barH = Math.max((Math.abs(a.delta) / maxAbs) * barAreaH, 0.8);
+      const bx = barZoneX + i * slotW + (slotW - barW) / 2;
+
+      // Toutes les barres descendent depuis la ligne 0 ; la couleur indique le signe
+      if (a.delta >= -0.01) {
+        doc.setFillColor(16, 185, 129); // vert — OK
+      } else {
+        doc.setFillColor(239, 68, 68);  // rouge — manque à gagner
+      }
+      doc.rect(bx, zeroLineY, barW, barH, 'F');
+
+      // Label mois
+      doc.setFontSize(5.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(moisCourt(a.mois), bx + barW / 2, bottomBarY + 6, { align: 'center' });
     });
 
     y += chartH;
