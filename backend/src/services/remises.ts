@@ -40,17 +40,19 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
   // Decade 3 = recapitulatif mensuel pour RP, AC et remise contractuelle
   const decade3 = decades.find(d => d.decade === 3);
 
-  // Remise annoncee et frais generaux = D3 du mois M+1
-  // (regle metier : D3 mois M contient les donnees cumulatives du mois M-1)
-  const nextDecade3 = (groupes[moisSuivant(moisKey)] ?? []).find(d => d.decade === 3);
-  const remiseReelle = nextDecade3 !== undefined ? Math.abs(nextDecade3.remiseAbnMargeHT ?? 0) : 0;
-  const fraisGeneraux = nextDecade3 !== undefined ? Math.abs(nextDecade3.fraisGenerauxBrutHT ?? 0) : 0;
+  // Frais generaux = D3 du mois M (pas de decalage, les frais de M sont dans D3 M)
+  const fraisGeneraux = Math.abs(decade3?.fraisGenerauxBrutHT ?? 0);
 
   // Assiette = Débit HT mensuel - Remises partenariats (D3, cumulatif) - Avoirs commerciaux (D3, cumulatif) - Frais généraux
   // (la remise de 3% s'applique uniquement sur les marchandises, pas sur les frais)
   const rpMensuel = Math.abs(decade3?.remisesPartenariatsHT ?? 0);
   const acMensuel = Math.abs(decade3?.avoirsCommerciauxHT ?? 0);
   const assiette = totalHTMensuel - rpMensuel - acMensuel - fraisGeneraux;
+
+  // Remise annoncee = D3 du mois M+1
+  // (regle metier specifique : remiseAbnMargeHT de D3 mois M concerne le mois M-1)
+  const nextDecade3 = (groupes[moisSuivant(moisKey)] ?? []).find(d => d.decade === 3);
+  const remiseReelle = nextDecade3 !== undefined ? Math.abs(nextDecade3.remiseAbnMargeHT ?? 0) : 0;
 
   // Remise attendue = 3% de l'assiette
   const remiseAttendue = assiette * 0.03;
