@@ -356,7 +356,7 @@ export function PageDonnees() {
                 { terme: 'Débit HT', def: 'Montant total des achats hors taxes facturés sur une décade. C\'est la base brute avant toute déduction.' },
                 { terme: 'Remises partenariats (RP)', def: 'Remises accordées dans le cadre de contrats spécifiques avec des laboratoires ou partenaires. Valeur cumulative du mois, lue en D3.' },
                 { terme: 'Avoirs commerciaux (AC)', def: 'Avoirs accordés à titre commercial (retours, gestes commerciaux, etc.). Valeur cumulative du mois, lue en D3.' },
-                { terme: 'Frais généraux', def: 'Frais de service facturés par le répartiteur (transport, logistique, etc.). Le montant net HT est utilisé dans les calculs (après déduction des remises sur frais). Ils ne font pas l\'objet de la remise commerciale de 3%.' },
+                { terme: 'Frais généraux', def: 'Frais de service facturés par le répartiteur (transport, logistique, etc.). Le montant brut HT est utilisé dans les calculs. Ils ne font pas l\'objet de la remise commerciale de 3%.' },
                 { terme: 'Remise ABN / Marge', def: 'Remise contractuelle de 3% versée par Alliance Healthcare sur les achats de marchandises. C\'est la ligne "Remise Abn Marge HT" dans les relevés.' },
               ].map(({ terme, def }) => (
                 <div key={terme} className="px-5 py-3 flex gap-4">
@@ -375,7 +375,7 @@ export function PageDonnees() {
             </div>
             <div className="px-5 py-4 space-y-3">
               <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
-                <p>Assiette = Débit HT (D1+D2+D3) − Remises partenariats (D3) − Avoirs commerciaux (D3) − Frais généraux net HT (D3)</p>
+                <p>Assiette = Débit HT (D1+D2+D3) − Remises partenariats (D3) − Avoirs commerciaux (D3) − Frais généraux brut HT (D3)</p>
                 <p className="text-[#6B2D8B] font-semibold">Remise attendue = Assiette × 3 %</p>
               </div>
               <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
@@ -412,7 +412,7 @@ export function PageDonnees() {
             </div>
             <div className="px-5 py-4 space-y-3">
               <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
-                <p>Reversée = Remise annoncée − Frais généraux net HT</p>
+                <p>Reversée = Remise annoncée − Frais généraux brut HT</p>
                 <p className="text-[#6B2D8B] font-semibold">Delta = Reversée − Remise attendue</p>
               </div>
               <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
