@@ -4,6 +4,17 @@ import { AnalyseRemise, Payment, Reclamation } from '../services/api';
 
 const MOIS_COURTS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
+function getMoisRange(debut: string, fin: string): string[] {
+  const result: string[] = [];
+  let cur = debut;
+  while (cur <= fin) {
+    result.push(cur);
+    const [y, m] = cur.split('-').map(Number);
+    cur = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+  }
+  return result;
+}
+
 function moisCourt(moisKey: string): string {
   const m = parseInt(moisKey.split('-')[1]) - 1;
   return MOIS_COURTS[m] ?? '';
@@ -54,13 +65,17 @@ export function exportYearlyPDF(annee: number, analyses: AnalyseRemise[], paymen
   const totReversee = analyses.reduce((s, a) => s + a.reversee, 0);
   const totFrais = analyses.reduce((s, a) => s + a.fraisGeneraux, 0);
   const totDelta = analyses.reduce((s, a) => s + a.delta, 0);
-  // Paiements liés aux réclamations dont la période est dans l'année N
-  const claimIdsForYear = new Set(
-    reclamations.filter(r => r.moisDebut.startsWith(String(annee))).map(r => r.id)
-  );
-  const totalRecupere = payments
-    .filter(p => claimIdsForYear.has(p.claimId))
-    .reduce((s, p) => s + p.amount, 0);
+  // Paiements liés aux réclamations touchant l'année N, au pro-rata des mois concernés
+  const totalRecupere = reclamations.reduce((sum, r) => {
+    const allMonths = getMoisRange(r.moisDebut, r.moisFin);
+    const monthsInYear = allMonths.filter(m => m.startsWith(String(annee))).length;
+    if (monthsInYear === 0) return sum;
+    const ratio = monthsInYear / allMonths.length;
+    const claimPayments = payments
+      .filter(p => p.claimId === r.id)
+      .reduce((s, p) => s + p.amount, 0);
+    return sum + claimPayments * ratio;
+  }, 0);
   const deficitBrut = totDelta < 0 ? Math.abs(totDelta) : 0;
   const resteAPercevoir = Math.max(0, deficitBrut - totalRecupere);
 
