@@ -355,7 +355,7 @@ export function PageDonnees() {
                 { terme: 'Décade', def: 'Période de facturation d\'environ 10 jours. Chaque mois M est divisé en 3 décades (D1, D2, D3). D3 est la décade récapitulative : elle contient les valeurs cumulatives mensuelles pour les frais et la remise.' },
                 { terme: 'Total TTC (D1+D2+D3)', def: 'Somme des montants TTC des 3 décades du mois. Attention : le totalTTC de D3 contient déjà en déduction la remise du mois précédent (M-1), annoncée sous forme d\'avoir dans D3 M.' },
                 { terme: 'Frais généraux TTC', def: 'Frais de service du répartiteur (transport, logistique…), montant TTC cumulatif mensuel, lu dans la D3 du mois M. Ils ne sont pas soumis à la remise de 3%.' },
-                { terme: 'Remise ABN / Marge TTC', def: 'Remise contractuelle versée par Alliance Healthcare. La D3 du mois M contient la remise cumulative pour les achats du mois M-1. Exemple : la remise pour janvier 2026 est annoncée dans la D3 de février 2026.' },
+                { terme: 'Remise ABN / Marge TTC', def: 'Remise contractuelle versée par Alliance Healthcare. Valeur négative (avoir) dans le relevé. La D3 du mois M contient la remise pour les achats du mois M-1. Exemple : la remise pour janvier 2026 est annoncée dans la D3 de février 2026.' },
                 { terme: 'Reversée (mois M)', def: 'Montant net effectivement crédité pour le mois M = Remise annoncée TTC (D3 de M+1) − Frais généraux TTC (D3 de M).' },
                 { terme: 'Delta (mois M)', def: 'Écart entre ce qui a été reversé et ce qui aurait dû l\'être : Reversée(M) − Attendue(M). Négatif = manque à gagner.' },
               ].map(({ terme, def }) => (
@@ -380,10 +380,10 @@ export function PageDonnees() {
                 <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">① Assiette TTC (base de calcul)</p>
                 <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-0.5">
                   <p>Assiette(M)  =  Total TTC D1+D2+D3 du mois M</p>
+                  <p>             −  Remise ABN/Marge TTC de M-1  <span className="text-slate-400">(lue en D3 du mois M)</span></p>
                   <p>             −  Frais généraux TTC  <span className="text-slate-400">(D3 du mois M)</span></p>
-                  <p>             +  Remise ABN/Marge TTC  <span className="text-slate-400">(D3 du mois M, déjà déduite du total)</span></p>
                 </div>
-                <p className="text-xs text-slate-400 mt-1.5 italic">Le totalTTC contient la remise M-1 en déduction → on la réintègre pour retrouver la base brute marchandises.</p>
+                <p className="text-xs text-slate-400 mt-1.5 italic">La remise de M-1 est une valeur négative dans le relevé (avoir) — la soustraire revient à l'ajouter en valeur absolue.</p>
               </div>
 
               {/* Remise attendue */}
