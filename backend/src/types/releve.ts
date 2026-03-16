@@ -12,6 +12,8 @@ export interface Releve {
   avoirsCommerciauxHT: number | null;
   fraisGenerauxBrutHT: number | null;
   fraisGenerauxNetHT: number | null;
+  fraisGenerauxTTC: number | null;
+  remiseAbnMargeTTC: number | null;
   importedAt: string;
   source: string;
   hash: string;

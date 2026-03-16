@@ -353,11 +353,9 @@ export function PageDonnees() {
             <div className="divide-y divide-slate-50">
               {[
                 { terme: 'Décade', def: 'Période de facturation d\'environ 10 jours. Chaque mois est divisé en 3 décades (D1, D2, D3). Les relevés Alliance Healthcare sont émis par décade.' },
-                { terme: 'Débit HT', def: 'Montant total des achats hors taxes facturés sur une décade. C\'est la base brute avant toute déduction.' },
-                { terme: 'Remises partenariats (RP)', def: 'Remises accordées dans le cadre de contrats spécifiques avec des laboratoires ou partenaires. Valeur cumulative du mois, lue en D3.' },
-                { terme: 'Avoirs commerciaux (AC)', def: 'Avoirs accordés à titre commercial (retours, gestes commerciaux, etc.). Valeur cumulative du mois, lue en D3.' },
-                { terme: 'Frais généraux', def: 'Frais de service facturés par le répartiteur (transport, logistique, etc.). Le montant net HT est utilisé dans les calculs (après déduction des remises sur frais). Ils ne font pas l\'objet de la remise commerciale de 3%.' },
-                { terme: 'Remise ABN / Marge', def: 'Remise contractuelle de 3% versée par Alliance Healthcare sur les achats de marchandises. C\'est la ligne "Remise Abn Marge HT" dans les relevés.' },
+                { terme: 'Total TTC', def: 'Montant total TTC (toutes taxes comprises) facturé sur une décade. C\'est la base utilisée pour le calcul de l\'assiette de remise.' },
+                { terme: 'Frais généraux TTC', def: 'Frais de service facturés par le répartiteur (transport, logistique, etc.), montant TTC. Lus en D3 du mois M. Ils ne font pas l\'objet de la remise commerciale de 3%.' },
+                { terme: 'Remise ABN / Marge', def: 'Remise contractuelle de 3% versée par Alliance Healthcare sur les achats de marchandises. Montant TTC, lu dans la D3 du mois M+1 (décalage d\'un mois).' },
               ].map(({ terme, def }) => (
                 <div key={terme} className="px-5 py-3 flex gap-4">
                   <span className="text-xs font-semibold text-slate-700 w-44 shrink-0 pt-0.5">{terme}</span>
@@ -375,13 +373,14 @@ export function PageDonnees() {
             </div>
             <div className="px-5 py-4 space-y-3">
               <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
-                <p>Assiette = Débit HT (D1+D2+D3) − Remises partenariats (D3) − Avoirs commerciaux (D3) − Frais généraux net HT (D3)</p>
-                <p className="text-[#6B2D8B] font-semibold">Remise attendue = Assiette × 3 %</p>
+                <p>Assiette TTC = Total TTC (D1+D2+D3) − Frais généraux TTC (D3) − Remise annoncée TTC (D3 de M+1)</p>
+                <p className="text-[#6B2D8B] font-semibold">Remise attendue = Assiette TTC × 3 %</p>
               </div>
               <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
-                <li>Le débit HT est la somme des 3 décades du mois.</li>
-                <li>Les remises partenariats, avoirs commerciaux et frais généraux sont lus dans la <strong>D3 du mois M</strong> (valeurs cumulatives mensuelles).</li>
-                <li>Les frais généraux sont exclus de l'assiette car la remise de 3% ne s'applique que sur les marchandises.</li>
+                <li>Le Total TTC est la somme des 3 décades du mois.</li>
+                <li>Les frais généraux TTC sont lus dans la <strong>D3 du mois M</strong> (valeurs cumulatives mensuelles).</li>
+                <li>La remise annoncée TTC est lue dans la <strong>D3 du mois M+1</strong> (décalage spécifique Alliance Healthcare).</li>
+                <li>Frais et remise sont exclus de l'assiette : la remise de 3% ne s'applique que sur les marchandises nettes.</li>
               </ul>
             </div>
           </div>
@@ -394,7 +393,7 @@ export function PageDonnees() {
             </div>
             <div className="px-5 py-4 space-y-3">
               <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700">
-                <p className="text-[#6B2D8B] font-semibold">Remise annoncée (mois M) = Remise ABN Marge HT de la D3 du mois M+1</p>
+                <p className="text-[#6B2D8B] font-semibold">Remise annoncée (mois M) = Remise ABN Marge TTC de la D3 du mois M+1</p>
               </div>
               <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
                 <li><strong>Règle de décalage Alliance Healthcare :</strong> la remise contractuelle cumulée annoncée dans la D3 d'un mois concerne le mois précédent.</li>
@@ -412,7 +411,7 @@ export function PageDonnees() {
             </div>
             <div className="px-5 py-4 space-y-3">
               <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
-                <p>Reversée = Remise annoncée − Frais généraux net HT</p>
+                <p>Reversée = Remise annoncée TTC − Frais généraux TTC</p>
                 <p className="text-[#6B2D8B] font-semibold">Delta = Reversée − Remise attendue</p>
               </div>
               <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">

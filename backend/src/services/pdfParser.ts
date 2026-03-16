@@ -125,18 +125,19 @@ function extractFields(text: string): Partial<Releve> {
   }
 
   // === 4. REMISE COMMERCIALE / ABN MARGE ===
-  // Texte: "Remises Commerciales/abn marge   -551,99   -430,14   ..."
-  // Le premier nombre apres le label = net HT
+  // Texte: "Remises Commerciales/abn marge  net_HT  col2  col3  col4  col5  col6  TTC"
+  // 7 colonnes: net HT (1), 5 intermédiaires, TTC (7)
   const remisePatterns = [
-    /Remises\s+Commerciales\s*\/\s*ab[nm]\s+marge\s+([-]?[\d][\d\s]*[,\.]\d{2})/i,
-    /Remises\s+Commerciales\s*\/\s*abonnement\s+marge\s+([-]?[\d][\d\s]*[,\.]\d{2})/i
+    /Remises\s+Commerciales\s*\/\s*ab[nm]\s+marge\s+([-]?[\d][\d\s]*[,\.]\d{2})(?:\s+[-]?\d+[,\.]\d{2}){5}\s+([-]?[\d][\d\s]*[,\.]\d{2})/i,
+    /Remises\s+Commerciales\s*\/\s*abonnement\s+marge\s+([-]?[\d][\d\s]*[,\.]\d{2})(?:\s+[-]?\d+[,\.]\d{2}){5}\s+([-]?[\d][\d\s]*[,\.]\d{2})/i
   ];
 
   for (const regex of remisePatterns) {
     const match = text.match(regex);
     if (match) {
       fields.remiseAbnMargeHT = parseMonetaire(match[1]);
-      console.info(`[PDF Parser] Remise abn marge: ${fields.remiseAbnMargeHT}`);
+      fields.remiseAbnMargeTTC = parseMonetaire(match[2]);
+      console.info(`[PDF Parser] Remise abn marge HT: ${fields.remiseAbnMargeHT}, TTC: ${fields.remiseAbnMargeTTC}`);
       break;
     }
   }
@@ -164,17 +165,19 @@ function extractFields(text: string): Partial<Releve> {
   }
 
   // === 7. FRAIS GENERAUX ===
-  // Texte: "Total frais généraux   62,22   62,22   ..."
-  // Premier nombre = Montant brut HT, deuxième = Montant net HT
-  const fraisRegex = /Total\s+frais\s+g[eé]n[eé]raux\s+([\d][\d\s]*[,\.]\d{2})\s+([\d][\d\s]*[,\.]\d{2})/i;
+  // Texte: "Total frais généraux  brut_HT  net_HT  exo  base210  base55  base10  base20  TVA  TTC"
+  // 9 colonnes: brut HT (1), net HT (2), 6 intermédiaires, TTC (9)
+  const fraisRegex = /Total\s+frais\s+g[eé]n[eé]raux\s+([\d][\d\s]*[,\.]\d{2})\s+([\d][\d\s]*[,\.]\d{2})(?:\s+[-]?\d+[,\.]\d{2}){6}\s+([\d][\d\s]*[,\.]\d{2})/i;
   const fraisMatch = text.match(fraisRegex);
   if (fraisMatch) {
     fields.fraisGenerauxBrutHT = parseMonetaire(fraisMatch[1]);
     fields.fraisGenerauxNetHT = parseMonetaire(fraisMatch[2]);
-    console.info(`[PDF Parser] Frais généraux brut HT: ${fields.fraisGenerauxBrutHT}, net HT: ${fields.fraisGenerauxNetHT}`);
+    fields.fraisGenerauxTTC = parseMonetaire(fraisMatch[3]);
+    console.info(`[PDF Parser] Frais généraux brut HT: ${fields.fraisGenerauxBrutHT}, net HT: ${fields.fraisGenerauxNetHT}, TTC: ${fields.fraisGenerauxTTC}`);
   } else {
     fields.fraisGenerauxBrutHT = null;
     fields.fraisGenerauxNetHT = null;
+    fields.fraisGenerauxTTC = null;
   }
 
   if (errors.length > 0) {

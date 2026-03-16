@@ -34,28 +34,30 @@ function grouperParMois(releves: Releve[]): Record<string, Releve[]> {
 }
 
 function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string, Releve[]>): AnalyseRemise {
-  // Somme des Débit HT des decades presentes
-  const totalHTMensuel = decades.reduce((sum, d) => sum + (d.debitHT ?? d.totalNetHT), 0);
+  // Somme des Total TTC des decades presentes (base de calcul TTC)
+  const totalTTCMensuel = decades.reduce((sum, d) => sum + (d.totalTTC ?? 0), 0);
 
-  // Decade 3 = recapitulatif mensuel pour RP, AC et remise contractuelle
+  // Decade 3 = recapitulatif mensuel pour frais et remise
   const decade3 = decades.find(d => d.decade === 3);
 
-  // Frais generaux = D3 du mois M (pas de decalage, les frais de M sont dans D3 M)
-  // Utilise fraisGenerauxNetHT si disponible (PDFs reimportes), sinon fallback sur brut
-  const fraisGeneraux = Math.abs(decade3?.fraisGenerauxNetHT ?? decade3?.fraisGenerauxBrutHT ?? 0);
+  // Frais generaux TTC = D3 du mois M (pas de decalage, les frais de M sont dans D3 M)
+  // Fallback HT si TTC absent (anciens PDFs avant re-import)
+  const fraisGeneraux = Math.abs(
+    decade3?.fraisGenerauxTTC ?? decade3?.fraisGenerauxNetHT ?? decade3?.fraisGenerauxBrutHT ?? 0
+  );
 
-  // Assiette = Débit HT mensuel - Remises partenariats (D3, cumulatif) - Avoirs commerciaux (D3, cumulatif) - Frais généraux
-  // (la remise de 3% s'applique uniquement sur les marchandises, pas sur les frais)
-  const rpMensuel = Math.abs(decade3?.remisesPartenariatsHT ?? 0);
-  const acMensuel = Math.abs(decade3?.avoirsCommerciauxHT ?? 0);
-  const assiette = totalHTMensuel - rpMensuel - acMensuel - fraisGeneraux;
-
-  // Remise annoncee = D3 du mois M+1
-  // (regle metier specifique : remiseAbnMargeHT de D3 mois M concerne le mois M-1)
+  // Remise annoncee TTC = D3 du mois M+1
+  // (regle metier : remiseAbnMarge de D3 mois M concerne le mois M-1)
   const nextDecade3 = (groupes[moisSuivant(moisKey)] ?? []).find(d => d.decade === 3);
-  const remiseReelle = nextDecade3 !== undefined ? Math.abs(nextDecade3.remiseAbnMargeHT ?? 0) : 0;
+  const remiseReelle = nextDecade3 !== undefined
+    ? Math.abs(nextDecade3.remiseAbnMargeTTC ?? nextDecade3.remiseAbnMargeHT ?? 0)
+    : 0;
 
-  // Remise attendue = 3% de l'assiette
+  // Assiette TTC = Total TTC mensuel - frais TTC - remise annoncée TTC
+  // (la remise de 3% s'applique sur les marchandises nettes, hors frais et hors remise déjà accordée)
+  const assiette = totalTTCMensuel - fraisGeneraux - remiseReelle;
+
+  // Remise attendue = 3% de l'assiette TTC
   const remiseAttendue = assiette * 0.03;
 
   // Reversee = annoncee - frais (ce qui est reellement reverse net de frais)
@@ -81,7 +83,7 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
 
   return {
     mois: moisKey,
-    totalHTMensuel: arrondir(totalHTMensuel),
+    totalHTMensuel: arrondir(totalTTCMensuel),
     remiseAttendue: arrondir(remiseAttendue),
     remiseReelle: arrondir(remiseReelle),
     fraisGeneraux: arrondir(fraisGeneraux),
