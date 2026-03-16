@@ -352,10 +352,12 @@ export function PageDonnees() {
             </div>
             <div className="divide-y divide-slate-50">
               {[
-                { terme: 'Décade', def: 'Période de facturation d\'environ 10 jours. Chaque mois est divisé en 3 décades (D1, D2, D3). Les relevés Alliance Healthcare sont émis par décade.' },
-                { terme: 'Total TTC', def: 'Montant total TTC (toutes taxes comprises) facturé sur une décade. C\'est la base utilisée pour le calcul de l\'assiette de remise.' },
-                { terme: 'Frais généraux TTC', def: 'Frais de service facturés par le répartiteur (transport, logistique, etc.), montant TTC. Lus en D3 du mois M. Ils ne font pas l\'objet de la remise commerciale de 3%.' },
-                { terme: 'Remise ABN / Marge', def: 'Remise contractuelle de 3% versée par Alliance Healthcare sur les achats de marchandises. Montant TTC, lu dans la D3 du mois M+1 (décalage d\'un mois).' },
+                { terme: 'Décade', def: 'Période de facturation d\'environ 10 jours. Chaque mois M est divisé en 3 décades (D1, D2, D3). D3 est la décade récapitulative : elle contient les valeurs cumulatives mensuelles pour les frais et la remise.' },
+                { terme: 'Total TTC (D1+D2+D3)', def: 'Somme des montants TTC des 3 décades du mois. Attention : le totalTTC de D3 contient déjà en déduction la remise du mois précédent (M-1), annoncée sous forme d\'avoir dans D3 M.' },
+                { terme: 'Frais généraux TTC', def: 'Frais de service du répartiteur (transport, logistique…), montant TTC cumulatif mensuel, lu dans la D3 du mois M. Ils ne sont pas soumis à la remise de 3%.' },
+                { terme: 'Remise ABN / Marge TTC', def: 'Remise contractuelle versée par Alliance Healthcare. La D3 du mois M contient la remise cumulative pour les achats du mois M-1. Exemple : la remise pour janvier 2026 est annoncée dans la D3 de février 2026.' },
+                { terme: 'Reversée (mois M)', def: 'Montant net effectivement crédité pour le mois M = Remise annoncée TTC (D3 de M+1) − Frais généraux TTC (D3 de M).' },
+                { terme: 'Delta (mois M)', def: 'Écart entre ce qui a été reversé et ce qui aurait dû l\'être : Reversée(M) − Attendue(M). Négatif = manque à gagner.' },
               ].map(({ terme, def }) => (
                 <div key={terme} className="px-5 py-3 flex gap-4">
                   <span className="text-xs font-semibold text-slate-700 w-44 shrink-0 pt-0.5">{terme}</span>
@@ -365,59 +367,55 @@ export function PageDonnees() {
             </div>
           </div>
 
-          {/* Remise attendue */}
+          {/* Schéma de calcul */}
           <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-sm font-semibold text-slate-700">Remise attendue</h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">Ce que le répartiteur aurait dû verser pour le mois M</p>
+              <h2 className="text-sm font-semibold text-slate-700">Schéma de calcul pour le mois M</h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">Toutes les valeurs sont lues dans les décades du mois M et M+1</p>
             </div>
-            <div className="px-5 py-4 space-y-3">
-              <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
-                <p>Assiette TTC = Total TTC (D1+D2+D3) − Frais généraux TTC (D3 M) + Remise déduite dans D3 M</p>
-                <p className="text-[#6B2D8B] font-semibold">Remise attendue = Assiette TTC × 3 %</p>
-              </div>
-              <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
-                <li>Le Total TTC (D1+D2+D3) contient déjà en déduction la remise du mois M-1 versée dans D3 M.</li>
-                <li>On <strong>rajoute</strong> cette remise pour retrouver la base brute marchandises avant remise.</li>
-                <li>On <strong>déduit</strong> les frais généraux TTC (D3 M) : ils ne font pas l'objet de la remise de 3%.</li>
-              </ul>
-            </div>
-          </div>
+            <div className="px-5 py-4 space-y-4">
 
-          {/* Remise annoncée */}
-          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-sm font-semibold text-slate-700">Remise annoncée</h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">Ce que le répartiteur a effectivement annoncé pour le mois M</p>
-            </div>
-            <div className="px-5 py-4 space-y-3">
-              <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700">
-                <p className="text-[#6B2D8B] font-semibold">Remise annoncée (mois M) = Remise ABN Marge TTC de la D3 du mois M+1</p>
+              {/* Assiette */}
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">① Assiette TTC (base de calcul)</p>
+                <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-0.5">
+                  <p>Assiette(M)  =  Total TTC D1+D2+D3 du mois M</p>
+                  <p>             −  Frais généraux TTC  <span className="text-slate-400">(D3 du mois M)</span></p>
+                  <p>             +  Remise ABN/Marge TTC  <span className="text-slate-400">(D3 du mois M, déjà déduite du total)</span></p>
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5 italic">Le totalTTC contient la remise M-1 en déduction → on la réintègre pour retrouver la base brute marchandises.</p>
               </div>
-              <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
-                <li><strong>Règle de décalage Alliance Healthcare :</strong> la remise contractuelle cumulée annoncée dans la D3 d'un mois concerne le mois précédent.</li>
-                <li>Exemple : la remise annoncée pour janvier 2026 se trouve dans la D3 de février 2026.</li>
-                <li>Si la D3 du mois suivant n'est pas encore importée, le statut du mois est <span className="text-amber-600 font-semibold">Incomplet</span>.</li>
-              </ul>
-            </div>
-          </div>
 
-          {/* Reversée & Delta */}
-          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-sm font-semibold text-slate-700">Reversée & Delta</h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">Montant net effectivement reçu et écart par rapport à l'attendu</p>
-            </div>
-            <div className="px-5 py-4 space-y-3">
-              <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
-                <p>Reversée = Remise annoncée TTC − Frais généraux TTC</p>
-                <p className="text-[#6B2D8B] font-semibold">Delta = Reversée − Remise attendue</p>
+              {/* Remise attendue */}
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">② Remise attendue</p>
+                <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700">
+                  <p className="text-[#6B2D8B] font-semibold">Attendue(M)  =  Assiette(M) × 3 %</p>
+                </div>
               </div>
-              <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
-                <li>La <strong>Reversée</strong> est le montant net réellement crédité après déduction des frais de service.</li>
-                <li>Un <strong>Delta positif</strong> signifie que le répartiteur a versé plus que prévu (situation favorable).</li>
-                <li>Un <strong>Delta négatif</strong> signifie un manque à gagner : le répartiteur a sous-versé par rapport au contrat.</li>
-              </ul>
+
+              {/* Reversée */}
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">③ Remise reversée</p>
+                <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-0.5">
+                  <p>Reversée(M)  =  Remise ABN/Marge TTC  <span className="text-slate-400">(D3 du mois M+1)</span></p>
+                  <p>             −  Frais généraux TTC  <span className="text-slate-400">(D3 du mois M)</span></p>
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5 italic">Exemple janvier 2026 : Remise annoncée en D3 février − Frais de D3 janvier.</p>
+              </div>
+
+              {/* Delta */}
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">④ Delta</p>
+                <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700">
+                  <p className="text-[#6B2D8B] font-semibold">Delta(M)  =  Reversée(M) − Attendue(M)</p>
+                </div>
+                <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside mt-1.5">
+                  <li><strong>Delta positif</strong> : le répartiteur a versé plus que prévu.</li>
+                  <li><strong>Delta négatif</strong> : manque à gagner — le répartiteur a sous-versé.</li>
+                </ul>
+              </div>
+
             </div>
           </div>
 
