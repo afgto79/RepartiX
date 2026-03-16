@@ -46,16 +46,19 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
     decade3?.fraisGenerauxTTC ?? decade3?.fraisGenerauxNetHT ?? decade3?.fraisGenerauxBrutHT ?? 0
   );
 
-  // Remise annoncee TTC = D3 du mois M+1
-  // (regle metier : remiseAbnMarge de D3 mois M concerne le mois M-1)
+  // Remise deja deduite dans totalTTC = D3 du mois M (concerne le mois M-1)
+  // Le totalTTC contient cette remise en deduction : on la rajoute pour obtenir la base brute marchandises
+  const remiseDeduiteDansM = Math.abs(decade3?.remiseAbnMargeTTC ?? decade3?.remiseAbnMargeHT ?? 0);
+
+  // Assiette TTC = Total TTC mensuel - frais TTC + remise deja deduite (M-1)
+  // La remise etant deja incluse en negatif dans totalTTC, on l'ajoute pour revenir au brut marchandises
+  const assiette = totalTTCMensuel - fraisGeneraux + remiseDeduiteDansM;
+
+  // Remise reelle (annoncee pour mois M) = D3 du mois M+1
   const nextDecade3 = (groupes[moisSuivant(moisKey)] ?? []).find(d => d.decade === 3);
   const remiseReelle = nextDecade3 !== undefined
     ? Math.abs(nextDecade3.remiseAbnMargeTTC ?? nextDecade3.remiseAbnMargeHT ?? 0)
     : 0;
-
-  // Assiette TTC = Total TTC mensuel - frais TTC - remise annoncée TTC
-  // (la remise de 3% s'applique sur les marchandises nettes, hors frais et hors remise déjà accordée)
-  const assiette = totalTTCMensuel - fraisGeneraux - remiseReelle;
 
   // Remise attendue = 3% de l'assiette TTC
   const remiseAttendue = assiette * 0.03;

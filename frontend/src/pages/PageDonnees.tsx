@@ -373,14 +373,13 @@ export function PageDonnees() {
             </div>
             <div className="px-5 py-4 space-y-3">
               <div className="bg-slate-50 rounded-lg px-4 py-3 font-mono text-xs text-slate-700 space-y-1">
-                <p>Assiette TTC = Total TTC (D1+D2+D3) − Frais généraux TTC (D3) − Remise annoncée TTC (D3 de M+1)</p>
+                <p>Assiette TTC = Total TTC (D1+D2+D3) − Frais généraux TTC (D3 M) + Remise déduite dans D3 M</p>
                 <p className="text-[#6B2D8B] font-semibold">Remise attendue = Assiette TTC × 3 %</p>
               </div>
               <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
-                <li>Le Total TTC est la somme des 3 décades du mois.</li>
-                <li>Les frais généraux TTC sont lus dans la <strong>D3 du mois M</strong> (valeurs cumulatives mensuelles).</li>
-                <li>La remise annoncée TTC est lue dans la <strong>D3 du mois M+1</strong> (décalage spécifique Alliance Healthcare).</li>
-                <li>Frais et remise sont exclus de l'assiette : la remise de 3% ne s'applique que sur les marchandises nettes.</li>
+                <li>Le Total TTC (D1+D2+D3) contient déjà en déduction la remise du mois M-1 versée dans D3 M.</li>
+                <li>On <strong>rajoute</strong> cette remise pour retrouver la base brute marchandises avant remise.</li>
+                <li>On <strong>déduit</strong> les frais généraux TTC (D3 M) : ils ne font pas l'objet de la remise de 3%.</li>
               </ul>
             </div>
           </div>
