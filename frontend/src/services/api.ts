@@ -11,6 +11,8 @@ export interface AnalyseRemise {
   deltaPourcent: number;
   statut: 'OK' | 'EN_COURS' | 'RETARD';
   decadesPresentes: number[];
+  methodeCalcul: 'ORPEC' | 'ALLIANCE_TTC';
+  orpecDisponible: boolean;
 }
 
 export interface UploadResponse {

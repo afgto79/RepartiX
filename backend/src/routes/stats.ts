@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getReleves, getPayments } from '../services/storage';
+import { getReleves, getPayments, loadData } from '../services/storage';
 import { calculerRemisesMensuelles } from '../services/remises';
 
 const router = Router();
@@ -11,11 +11,12 @@ router.get('/dashboard', async (req, res) => {
 
     // Charger aussi les releves de l'annee suivante pour pouvoir lire
     // la D3 de janvier N+1 (remise reelle de decembre N)
-    const [releves, relevesNext] = await Promise.all([
+    const [releves, relevesNext, data] = await Promise.all([
       getReleves({ annee }),
-      getReleves({ annee: annee + 1 })
+      getReleves({ annee: annee + 1 }),
+      loadData()
     ]);
-    const analyses = calculerRemisesMensuelles([...releves, ...relevesNext])
+    const analyses = calculerRemisesMensuelles([...releves, ...relevesNext], data.orpecData)
       .filter(a => a.mois.startsWith(`${annee}-`));
 
     res.json({
@@ -35,7 +36,8 @@ router.get('/dashboard', async (req, res) => {
 router.get('/cumul', async (_req, res) => {
   try {
     const releves = await getReleves();
-    const analyses = calculerRemisesMensuelles(releves);
+    const data = await loadData();
+    const analyses = calculerRemisesMensuelles(releves, data.orpecData);
     const payments = await getPayments();
 
     // Somme des deltas de tous les mois complets (avec 3 decades)

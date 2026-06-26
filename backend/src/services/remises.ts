@@ -1,14 +1,19 @@
-import { Releve, AnalyseRemise } from '../types/releve';
+import { Releve, AnalyseRemise, OrpecMoisData } from '../types/releve';
 
 /**
  * Calcule les analyses de remises pour tous les mois disponibles.
  * Groupe les decades par mois et applique la regle metier (3%).
+ * Si des donnees ORPEC (PIEVE) sont fournies pour un mois, la remise attendue
+ * vient de l'assiette ORPEC ; sinon on garde l'estimation sur assiette TTC Alliance.
  */
-export function calculerRemisesMensuelles(releves: Releve[]): AnalyseRemise[] {
+export function calculerRemisesMensuelles(
+  releves: Releve[],
+  orpecData?: Record<string, OrpecMoisData>
+): AnalyseRemise[] {
   const groupes = grouperParMois(releves);
 
   return Object.entries(groupes)
-    .map(([moisKey, decades]) => analyserMois(moisKey, decades, groupes))
+    .map(([moisKey, decades]) => analyserMois(moisKey, decades, groupes, orpecData))
     .sort((a, b) => a.mois.localeCompare(b.mois));
 }
 
@@ -33,7 +38,12 @@ function grouperParMois(releves: Releve[]): Record<string, Releve[]> {
   return groupes;
 }
 
-function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string, Releve[]>): AnalyseRemise {
+function analyserMois(
+  moisKey: string,
+  decades: Releve[],
+  groupes: Record<string, Releve[]>,
+  orpecData?: Record<string, OrpecMoisData>
+): AnalyseRemise {
   // Somme des Total TTC des decades presentes (base de calcul TTC)
   const totalTTCMensuel = decades.reduce((sum, d) => sum + (d.totalTTC ?? 0), 0);
 
@@ -60,8 +70,12 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
     ? Math.abs(nextDecade3.remiseAbnMargeTTC ?? nextDecade3.remiseAbnMargeHT ?? 0)
     : 0;
 
-  // Remise attendue = 3% de l'assiette TTC
-  const remiseAttendue = assiette * 0.03;
+  // Remise attendue : si donnees ORPEC (PIEVE) presentes pour ce mois, on utilise
+  // l'assiette contractuelle reelle ; sinon estimation 3% sur assiette TTC Alliance.
+  const orpecMois = orpecData?.[moisKey];
+  const orpecDisponible = orpecMois !== undefined;
+  const methodeCalcul: 'ORPEC' | 'ALLIANCE_TTC' = orpecDisponible ? 'ORPEC' : 'ALLIANCE_TTC';
+  const remiseAttendue = orpecDisponible ? orpecMois!.remiseDue : assiette * 0.03;
 
   // Reversee = annoncee - frais (ce qui est reellement reverse net de frais)
   const reversee = remiseReelle - fraisGeneraux;
@@ -94,7 +108,9 @@ function analyserMois(moisKey: string, decades: Releve[], groupes: Record<string
     delta: arrondir(delta),
     deltaPourcent: arrondir(deltaPourcent),
     statut,
-    decadesPresentes
+    decadesPresentes,
+    methodeCalcul,
+    orpecDisponible
   };
 }
 
