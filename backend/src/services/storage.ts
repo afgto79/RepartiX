@@ -30,6 +30,13 @@ export async function loadData(): Promise<DataStore> {
     if (!data.orpecData) {
       data.orpecData = {};
     }
+    // Migration: qualifier les regularisations sans type
+    // (montant > 0 -> versement recu ; sinon -> frais a qualifier manuellement)
+    for (const r of data.regularisations) {
+      if (!r.type) {
+        r.type = r.montant > 0 ? 'VERSEMENT_RECU' : 'FRAIS_AUTRE';
+      }
+    }
     return data;
   } catch {
     const emptyData: DataStore = {

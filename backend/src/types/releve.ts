@@ -36,6 +36,12 @@ export interface AnalyseRemise {
   orpecDisponible: boolean;
 }
 
+export type RegularisationType =
+  | 'VERSEMENT_RECU'        // paiement recu d'ORPEC (positif)
+  | 'CLAWBACK_GENERIQUES'   // recuperation palier - legitime, non contestable (negatif)
+  | 'FRAIS_INDU'            // frais non justifie - reclamable (negatif)
+  | 'FRAIS_AUTRE';          // autre deduction a qualifier manuellement
+
 export interface Regularisation {
   id: string;
   date: string;       // YYYY-MM-DD
@@ -43,6 +49,7 @@ export interface Regularisation {
   annee: number;       // annee concernee
   description: string; // ex: "Avoir n°12345"
   reclamationId?: string; // lien optionnel vers une reclamation
+  type?: RegularisationType; // optionnel pour retrocompatibilite
   createdAt: string;
 }
 
