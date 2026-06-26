@@ -66,8 +66,16 @@ export interface CumulResponse {
   deltaCumulTotal: number;
   regulTotal: number;
   resteDu: number;
+  soldeReclamable: number;
+  ecartStructurel: number;
   parAnnee: { annee: number; delta: number; regul: number; resteDu: number }[];
 }
+
+export type RegularisationType =
+  | 'VERSEMENT_RECU'
+  | 'CLAWBACK_GENERIQUES'
+  | 'FRAIS_INDU'
+  | 'FRAIS_AUTRE';
 
 export interface Regularisation {
   id: string;
@@ -76,6 +84,7 @@ export interface Regularisation {
   annee: number;
   description: string;
   reclamationId?: string;
+  type?: RegularisationType;
   createdAt: string;
 }
 
@@ -238,7 +247,7 @@ export const api = {
     return res.json();
   },
 
-  async addRegularisation(data: { date: string; montant: number; annee: number; description: string }): Promise<Regularisation> {
+  async addRegularisation(data: { date: string; montant: number; annee: number; description: string; type?: RegularisationType; reclamationId?: string }): Promise<Regularisation> {
     const res = await fetch(`${API_BASE}/regularisations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -248,7 +257,7 @@ export const api = {
     return res.json();
   },
 
-  async updateRegularisation(id: string, data: { date?: string; montant?: number; annee?: number; description?: string }): Promise<Regularisation> {
+  async updateRegularisation(id: string, data: { date?: string; montant?: number; annee?: number; description?: string; type?: RegularisationType; reclamationId?: string }): Promise<Regularisation> {
     const res = await fetch(`${API_BASE}/regularisations/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

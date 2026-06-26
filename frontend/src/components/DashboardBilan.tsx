@@ -267,7 +267,7 @@ export function DashboardBilan() {
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-4 border-t border-slate-800 pt-4">
+            <div className="grid grid-cols-3 gap-4 border-t border-slate-800 pt-4">
               <div>
                 <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Total reclame</p>
                 <p className="text-xl font-bold text-slate-200">{formatEuros(totalReclame)}</p>
@@ -275,6 +275,10 @@ export function DashboardBilan() {
               <div>
                 <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Deja percu</p>
                 <p className="text-xl font-bold text-emerald-400">{formatEuros(totalPercu)}</p>
+              </div>
+              <div title="Non contestable (palier generiques)">
+                <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Ecart structurel</p>
+                <p className="text-xl font-bold text-slate-400">{formatEuros(cumul?.ecartStructurel ?? 0)}</p>
               </div>
             </div>
           </div>

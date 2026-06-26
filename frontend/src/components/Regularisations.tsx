@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { Card, Badge } from '@tremor/react';
-import { api, Regularisation } from '../services/api';
+import { api, Regularisation, RegularisationType } from '../services/api';
+
+const TYPE_OPTIONS: { value: RegularisationType; label: string }[] = [
+  { value: 'VERSEMENT_RECU', label: 'Versement recu' },
+  { value: 'FRAIS_INDU', label: 'Frais indu (reclamable)' },
+  { value: 'CLAWBACK_GENERIQUES', label: 'Clawback generiques (non contestable)' },
+  { value: 'FRAIS_AUTRE', label: 'Autre (a qualifier)' }
+];
 import { formatEuros } from '../utils/formatters';
 
 interface RegularisationsProps {
@@ -11,12 +18,12 @@ interface RegularisationsProps {
 export function Regularisations({ regularisations, onUpdate }: RegularisationsProps) {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ date: '', montant: '', annee: new Date().getFullYear().toString(), description: '' });
+  const [form, setForm] = useState({ date: '', montant: '', annee: new Date().getFullYear().toString(), description: '', type: 'VERSEMENT_RECU' as RegularisationType });
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   function resetForm() {
-    setForm({ date: '', montant: '', annee: new Date().getFullYear().toString(), description: '' });
+    setForm({ date: '', montant: '', annee: new Date().getFullYear().toString(), description: '', type: 'VERSEMENT_RECU' });
     setEditId(null);
     setShowForm(false);
   }
@@ -26,7 +33,8 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
       date: r.date,
       montant: r.montant.toString(),
       annee: r.annee.toString(),
-      description: r.description
+      description: r.description,
+      type: r.type ?? 'VERSEMENT_RECU'
     });
     setEditId(r.id);
     setShowForm(true);
@@ -41,7 +49,8 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
         date: form.date,
         montant: parseFloat(form.montant),
         annee: parseInt(form.annee),
-        description: form.description
+        description: form.description,
+        type: form.type
       };
       if (editId) {
         await api.updateRegularisation(editId, data);
@@ -101,7 +110,7 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
               <p className="text-xs font-semibold mb-2 text-gray-600">
                 {editId ? 'Modifier la regularisation' : 'Nouvelle regularisation'}
               </p>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 <input
                   type="date"
                   value={form.date}
@@ -126,6 +135,16 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
                   required
                   className="px-2 py-1.5 text-sm border border-gray-300 rounded"
                 />
+                <select
+                  value={form.type}
+                  onChange={e => setForm({ ...form, type: e.target.value as RegularisationType })}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded"
+                  title="Type de regularisation"
+                >
+                  {TYPE_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   placeholder="Description (ex: Avoir n°123)"
