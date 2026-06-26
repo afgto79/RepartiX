@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { api, AnalyseRemise, CumulResponse, Regularisation } from '../services/api';
 import { formatEuros, formatMoisLabel } from '../utils/formatters';
 import { Regularisations } from './Regularisations';
+import { OrpecDataForm } from './OrpecDataForm';
 
 interface DashboardProps {
   onNavigateToMois: (annee: number, mois: number) => void;
@@ -17,6 +18,7 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
   const [years, setYears] = useState<number[]>([new Date().getFullYear()]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showOrpecForm, setShowOrpecForm] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -120,19 +122,36 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Controle Remises Alliance</h1>
-          <p className="text-sm text-gray-500">Suivi des remises contractuelles (3% NET HT mensuel)</p>
+          <p className="text-sm text-gray-500">Suivi des remises contractuelles (3% assiette contractuelle)</p>
         </div>
 
-        <select
-          value={annee}
-          onChange={e => setAnnee(parseInt(e.target.value))}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white shadow-sm"
-        >
-          {years.map(y => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowOrpecForm(true)}
+            className="px-3 py-1.5 text-sm font-medium text-white rounded-lg shadow-sm hover:opacity-90"
+            style={{ backgroundColor: '#6B2D8B' }}
+          >
+            Saisir donnees ORPEC
+          </button>
+          <select
+            value={annee}
+            onChange={e => setAnnee(parseInt(e.target.value))}
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white shadow-sm"
+          >
+            {years.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {showOrpecForm && (
+        <OrpecDataForm
+          initialMois={`${annee}-12`}
+          onClose={() => setShowOrpecForm(false)}
+          onSaved={() => { loadData(); loadCumul(); }}
+        />
+      )}
 
       {error && (
         <Card className="mb-4 bg-red-50 border-red-200">
@@ -305,7 +324,14 @@ export function Dashboard({ onNavigateToMois }: DashboardProps) {
                         {formatEuros(analyse.totalHTMensuel)}
                       </TableCell>
                       <TableCell className="py-1.5 text-sm text-right">
-                        {formatEuros(analyse.remiseAttendue)}
+                        <div className="flex items-center justify-end gap-1.5">
+                          {analyse.methodeCalcul === 'ORPEC' ? (
+                            <Badge size="xs" color="green">ORPEC ✓</Badge>
+                          ) : (
+                            <Badge size="xs" color="gray">Estimation</Badge>
+                          )}
+                          <span>{formatEuros(analyse.remiseAttendue)}</span>
+                        </div>
                       </TableCell>
                       <TableCell className="py-1.5 text-sm text-right">
                         {formatEuros(analyse.remiseReelle)}

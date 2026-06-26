@@ -112,6 +112,16 @@ export interface Payment {
   createdAt: string;
 }
 
+export interface OrpecMoisData {
+  source: 'PIEVE';
+  dateImport: string;
+  caHTorpec: number;
+  achatsGeneriques: number;
+  achatsAlvita: number;
+  assiette: number;
+  remiseDue: number;
+}
+
 export interface ReleveRaw {
   id: string;
   annee: number;
@@ -377,5 +387,32 @@ export const api = {
   async deleteReliquat(id: string): Promise<void> {
     const res = await fetch(`${API_BASE}/reliquats/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Erreur suppression reliquat');
+  },
+
+  // --- Donnees ORPEC (PIEVE) ---
+
+  async getOrpec(mois: string): Promise<OrpecMoisData | null> {
+    const res = await fetch(`${API_BASE}/orpec/${mois}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Erreur chargement donnees ORPEC');
+    return res.json();
+  },
+
+  async putOrpec(
+    mois: string,
+    data: { caHTorpec: number; achatsGeneriques: number; achatsAlvita: number }
+  ): Promise<OrpecMoisData> {
+    const res = await fetch(`${API_BASE}/orpec/${mois}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur sauvegarde donnees ORPEC');
+    return res.json();
+  },
+
+  async deleteOrpec(mois: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/orpec/${mois}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression donnees ORPEC');
   }
 };
