@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { Releve, Regularisation, Reclamation, Payment, Reliquat, DataStore } from '../types/releve';
+import { Releve, Regularisation, Reclamation, Payment, Reliquat, OrpecMoisData, DataStore } from '../types/releve';
 
 const DATA_FILE = path.join(__dirname, '../data/releves.json');
 
@@ -331,4 +331,47 @@ export async function deleteReliquat(id: string): Promise<boolean> {
     return true;
   }
   return false;
+}
+
+// --- Donnees ORPEC (PIEVE) CRUD ---
+
+export async function getOrpecData(mois: string): Promise<OrpecMoisData | null> {
+  const data = await loadData();
+  return data.orpecData?.[mois] ?? null;
+}
+
+export async function setOrpecData(
+  mois: string,
+  fields: { caHTorpec: number; achatsGeneriques: number; achatsAlvita: number }
+): Promise<OrpecMoisData> {
+  const data = await loadData();
+  if (!data.orpecData) data.orpecData = {};
+
+  const caHTorpec = fields.caHTorpec;
+  const achatsGeneriques = fields.achatsGeneriques;
+  const achatsAlvita = fields.achatsAlvita;
+  const assiette = caHTorpec - achatsGeneriques - achatsAlvita;
+  const remiseDue = Math.round(assiette * 0.03 * 100) / 100;
+
+  const entry: OrpecMoisData = {
+    source: 'PIEVE',
+    dateImport: new Date().toISOString(),
+    caHTorpec,
+    achatsGeneriques,
+    achatsAlvita,
+    assiette: Math.round(assiette * 100) / 100,
+    remiseDue
+  };
+
+  data.orpecData[mois] = entry;
+  await saveData(data);
+  return entry;
+}
+
+export async function deleteOrpecData(mois: string): Promise<boolean> {
+  const data = await loadData();
+  if (!data.orpecData || !(mois in data.orpecData)) return false;
+  delete data.orpecData[mois];
+  await saveData(data);
+  return true;
 }

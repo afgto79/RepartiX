@@ -7,6 +7,7 @@ import { regularisationsRouter } from './routes/regularisations';
 import { reclamationsRouter } from './routes/reclamations';
 import { paymentsRouter } from './routes/payments';
 import { reliquatsRouter } from './routes/reliquats';
+import { orpecRouter } from './routes/orpec';
 import { scanFolder } from './services/fileWatcher';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api/regularisations', regularisationsRouter);
 app.use('/api/reclamations', reclamationsRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/reliquats', reliquatsRouter);
+app.use('/api/orpec', orpecRouter);
 
 // Scan dossier reseau
 app.post('/api/scan-folder', async (req, res) => {
