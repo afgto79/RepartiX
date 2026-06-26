@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 // POST /api/regularisations
 router.post('/', async (req, res) => {
   try {
-    const { date, montant, annee, description } = req.body;
+    const { date, montant, annee, description, reclamationId, type } = req.body;
     if (!date || montant === undefined || !annee) {
       return res.status(400).json({ error: 'Champs requis: date, montant, annee' });
     }
@@ -25,7 +25,9 @@ router.post('/', async (req, res) => {
       date,
       montant: parseFloat(montant),
       annee: parseInt(annee),
-      description: description || ''
+      description: description || '',
+      ...(reclamationId !== undefined ? { reclamationId } : {}),
+      ...(type !== undefined ? { type } : {})
     });
     res.status(201).json(regul);
   } catch (err) {
@@ -36,12 +38,14 @@ router.post('/', async (req, res) => {
 // PUT /api/regularisations/:id
 router.put('/:id', async (req, res) => {
   try {
-    const { date, montant, annee, description } = req.body;
+    const { date, montant, annee, description, reclamationId, type } = req.body;
     const updates: Record<string, unknown> = {};
     if (date !== undefined) updates.date = date;
     if (montant !== undefined) updates.montant = parseFloat(montant);
     if (annee !== undefined) updates.annee = parseInt(annee);
     if (description !== undefined) updates.description = description;
+    if (reclamationId !== undefined) updates.reclamationId = reclamationId;
+    if (type !== undefined) updates.type = type;
 
     const regul = await updateRegularisation(req.params.id, updates);
     if (!regul) {

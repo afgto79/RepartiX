@@ -39,6 +39,17 @@ router.get('/cumul', async (_req, res) => {
     const data = await loadData();
     const analyses = calculerRemisesMensuelles(releves, data.orpecData);
     const payments = await getPayments();
+    const regularisations = data.regularisations;
+
+    // Solde reclamable = versements recus + frais indus (+ non types par defaut)
+    const soldeReclamable = regularisations
+      .filter(r => r.type === 'VERSEMENT_RECU' || r.type === 'FRAIS_INDU' || !r.type)
+      .reduce((sum, r) => sum + r.montant, 0);
+
+    // Ecart structurel = clawbacks generiques (legitimes, non reclamables - info)
+    const ecartStructurel = regularisations
+      .filter(r => r.type === 'CLAWBACK_GENERIQUES')
+      .reduce((sum, r) => sum + r.montant, 0);
 
     // Somme des deltas de tous les mois complets (avec 3 decades)
     const deltaCumulTotal = analyses
@@ -71,6 +82,8 @@ router.get('/cumul', async (_req, res) => {
       deltaCumulTotal: Math.round(deltaCumulTotal * 100) / 100,
       regulTotal: Math.round(regulTotal * 100) / 100,
       resteDu: Math.round((deltaCumulTotal + regulTotal) * 100) / 100,
+      soldeReclamable: Math.round(soldeReclamable * 100) / 100,
+      ecartStructurel: Math.round(ecartStructurel * 100) / 100,
       parAnnee: [...allYears]
         .sort((a, b) => a - b)
         .map(annee => ({
