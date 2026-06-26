@@ -26,6 +26,10 @@ export async function loadData(): Promise<DataStore> {
     if (!data.reliquats) {
       data.reliquats = [];
     }
+    // Migration: ajouter orpecData si absent
+    if (!data.orpecData) {
+      data.orpecData = {};
+    }
     return data;
   } catch {
     const emptyData: DataStore = {

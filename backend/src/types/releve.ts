@@ -77,12 +77,24 @@ export interface Reliquat {
   createdAt: string;
 }
 
+// Donnees mensuelles ORPEC (saisie manuelle depuis les documents PIEVE)
+export interface OrpecMoisData {
+  source: 'PIEVE';
+  dateImport: string;          // ISO 8601
+  caHTorpec: number;
+  achatsGeneriques: number;
+  achatsAlvita: number;
+  assiette: number;            // calcule = caHTorpec - achatsGeneriques - achatsAlvita
+  remiseDue: number;           // calcule = assiette x 0.03
+}
+
 export interface DataStore {
   releves: Releve[];
   regularisations: Regularisation[];
   reclamations: Reclamation[];
   payments: Payment[];
   reliquats: Reliquat[];
+  orpecData?: Record<string, OrpecMoisData>;  // cle = "YYYY-MM"
   metadata: {
     lastUpdated: string;
     totalReleves: number;
