@@ -41,6 +41,8 @@ export function DashboardBilan() {
     statut: 'en_attente' as Reclamation['statut'], montantReclame: '', description: '',
     dateEngagementFournisseur: ''
   });
+  const [regulFormId, setRegulFormId] = useState<string | null>(null);
+  const [regulForm, setRegulForm] = useState({ montant: '', date: new Date().toISOString().slice(0, 10), description: '' });
 
   useEffect(() => { loadAllData(); }, []);
 
@@ -164,6 +166,31 @@ export function DashboardBilan() {
       loadAllData();
     } catch (err) {
       console.error('Erreur suppression:', err);
+    }
+  }
+
+  function startRegul(reclamId: string) {
+    setRegulForm({ montant: '', date: new Date().toISOString().slice(0, 10), description: '' });
+    setRegulFormId(reclamId);
+  }
+
+  async function handleRegulSubmit(e: React.FormEvent, reclamId: string) {
+    e.preventDefault();
+    const montant = parseFloat(regulForm.montant);
+    if (isNaN(montant)) return;
+    try {
+      await api.addRegularisation({
+        date: regulForm.date,
+        montant,
+        annee: parseInt(regulForm.date.slice(0, 4), 10),
+        description: regulForm.description || 'Versement recu',
+        reclamationId: reclamId,
+        type: 'VERSEMENT_RECU'
+      });
+      setRegulFormId(null);
+      loadAllData();
+    } catch (err) {
+      console.error('Erreur ajout regularisation:', err);
     }
   }
 
@@ -468,7 +495,7 @@ export function DashboardBilan() {
                     Relancer
                   </button>
                   <button
-                    onClick={() => alert('Fonctionnalite a venir')}
+                    onClick={() => regulFormId === reclam.id ? setRegulFormId(null) : startRegul(reclam.id)}
                     className="py-1.5 text-xs font-semibold border border-blue-200 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
                   >
                     + Regul.
@@ -486,6 +513,41 @@ export function DashboardBilan() {
                     Supprimer
                   </button>
                 </div>
+
+                {/* Mini-formulaire + Regul. */}
+                {regulFormId === reclam.id && (
+                  <form onSubmit={e => handleRegulSubmit(e, reclam.id)} className="mt-3 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                    <p className="text-xs font-bold text-slate-700 mb-2">Enregistrer une regularisation recue</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[10px] text-slate-500 block mb-0.5">Montant (EUR)</label>
+                        <input type="number" step="0.01" value={regulForm.montant} autoFocus
+                          onChange={e => setRegulForm({ ...regulForm, montant: e.target.value })}
+                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" required />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-500 block mb-0.5">Date</label>
+                        <input type="date" value={regulForm.date}
+                          onChange={e => setRegulForm({ ...regulForm, date: e.target.value })}
+                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" required />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-500 block mb-0.5">Description</label>
+                        <input type="text" value={regulForm.description}
+                          onChange={e => setRegulForm({ ...regulForm, description: e.target.value })}
+                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" placeholder="Optionnel" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                        Ajouter
+                      </button>
+                      <button type="button" onClick={() => setRegulFormId(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-white">
+                        Annuler
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           );
