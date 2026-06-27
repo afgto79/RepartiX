@@ -169,6 +169,48 @@ export function DashboardBilan() {
     }
   }
 
+  function handleExportCSV() {
+    const STATUT_LABELS: Record<string, string> = {
+      en_cours: 'En cours', en_attente: 'En attente', soldee: 'Soldee'
+    };
+    const fmtEur = (n: number) => n.toFixed(2).replace('.', ',');
+    const fmtDate = (d?: string) => d ? new Date(d).toLocaleDateString('fr-FR') : '';
+    const esc = (v: string) => /[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+
+    const header = ['Reference', 'Periode debut', 'Periode fin', 'Reclame', 'Percu', 'Reste', 'Statut', 'Engagement ORPEC', 'Jours retard'];
+    const rows = [...reclamations]
+      .sort((a, b) => a.reference.localeCompare(b.reference))
+      .map(r => {
+        const percu = getPercuForReclamation(r.id);
+        const reste = r.montantReclame - percu;
+        const retard = r.dateEngagementFournisseur && r.statut !== 'soldee'
+          ? joursSince(r.dateEngagementFournisseur) : 0;
+        return [
+          r.reference,
+          r.moisDebut,
+          r.moisFin,
+          fmtEur(r.montantReclame),
+          fmtEur(percu),
+          fmtEur(reste),
+          STATUT_LABELS[r.statut] ?? r.statut,
+          fmtDate(r.dateEngagementFournisseur),
+          retard > 0 ? String(retard) : ''
+        ].map(c => esc(String(c))).join(';');
+      });
+
+    const BOM = String.fromCharCode(0xFEFF);  // accents lisibles dans Excel
+    const csv = BOM + [header.join(';'), ...rows].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reclamations_repartix_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   function startRegul(reclamId: string) {
     setRegulForm({ montant: '', date: new Date().toISOString().slice(0, 10), description: '' });
     setRegulFormId(reclamId);
@@ -217,6 +259,13 @@ export function DashboardBilan() {
           <p className="text-slate-500 text-xs">Pilotage des reclamations remises repartiteurs</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCSV}
+            disabled={reclamations.length === 0}
+            className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Exporter CSV
+          </button>
           <button
             onClick={() => alert('Fonctionnalite a venir')}
             className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
