@@ -53,11 +53,15 @@ export async function parsePDF(filePath: string): Promise<Partial<Releve> | null
       return null;
     }
 
+    // Un echec de cross-check (totalNetHT hors plage / > debitHT) degrade en 'partial'
+    // sans bloquer l'import, meme si tous les champs sont presents.
+    const crossCheckFailed = extracted.parsingErrors?.some(e => e.startsWith('Cross-check')) ?? false;
+
     return {
       ...extracted,
       fournisseur: 'Alliance Healthcare',
       importedAt: new Date().toISOString(),
-      parsingStatus: hasAllFields(extracted) ? 'success' : 'partial'
+      parsingStatus: (hasAllFields(extracted) && !crossCheckFailed) ? 'success' : 'partial'
     };
   } catch (err) {
     console.error('[PDF Parser] Erreur parsing PDF:', err);
@@ -106,6 +110,16 @@ function extractFields(text: string): Partial<Releve> {
     console.info(`[PDF Parser] Débit HT: ${fields.debitHT}, Total NET HT: ${fields.totalNetHT}`);
   } else {
     errors.push('Total NET HT non trouve');
+  }
+
+  // === 2b. CROSS-CHECK TOTAL HT ===
+  // Cross-check 1 : totalNetHT doit etre positif et raisonnable (< 200 000 EUR/decade)
+  if (fields.totalNetHT && (fields.totalNetHT <= 0 || fields.totalNetHT > 200000)) {
+    errors.push(`Cross-check echoue : totalNetHT=${fields.totalNetHT} hors plage attendue`);
+  }
+  // Cross-check 2 : si debitHT present, totalNetHT doit etre < debitHT (le net est le brut moins remises/avoirs)
+  if (fields.debitHT && fields.totalNetHT && fields.totalNetHT > fields.debitHT) {
+    errors.push(`Cross-check echoue : totalNetHT (${fields.totalNetHT}) > debitHT (${fields.debitHT})`);
   }
 
   // === 3. TOTAL TTC ===
