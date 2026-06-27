@@ -16,9 +16,18 @@ function getMoisRange(debut: string, fin: string): string[] {
   return result;
 }
 
-function ParsingBadge({ status }: { status: string }) {
+function ParsingBadge({ status, errors }: { status: string; errors?: string[] }) {
   if (status === 'success') return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-700">OK</span>;
-  if (status === 'partial') return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">Partiel</span>;
+  if (status === 'partial') {
+    if (errors && errors.length > 0) {
+      return (
+        <span title={errors.join('\n')} className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-100 text-red-700 cursor-help">
+          &#9888; Parsing partiel
+        </span>
+      );
+    }
+    return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">Partiel</span>;
+  }
   return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-100 text-red-700">Erreur</span>;
 }
 
@@ -242,7 +251,7 @@ export function PageDonnees() {
                       <td className="px-4 py-3 text-right text-red-600">
                         {r.remiseAbnMargeHT !== null ? formatEuros(r.remiseAbnMargeHT) : <span className="text-slate-300">—</span>}
                       </td>
-                      <td className="px-4 py-3"><ParsingBadge status={r.parsingStatus} /></td>
+                      <td className="px-4 py-3"><ParsingBadge status={r.parsingStatus} errors={r.parsingErrors} /></td>
                       <td className="px-4 py-3">
                         <span className="text-[10px] text-slate-400 truncate block max-w-[160px]" title={r.source}>
                           {r.source.split('/').pop() ?? r.source}

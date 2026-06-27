@@ -67,6 +67,16 @@ export async function saveData(data: DataStore): Promise<void> {
 }
 
 export async function saveReleve(releve: Partial<Releve>): Promise<Releve> {
+  // Quarantaine : refuser un releve dont le parsing a echoue ou dont les champs critiques manquent
+  if (releve.parsingStatus === 'failed') {
+    throw new Error('Releve rejete — parsing echoue (parsingStatus: failed)');
+  }
+  const CHAMPS_REQUIS = ['annee', 'mois', 'decade', 'totalNetHT', 'totalTTC'] as const;
+  const champsManquants = CHAMPS_REQUIS.filter(c => !releve[c]);
+  if (champsManquants.length > 0) {
+    throw new Error(`Releve rejete — champs manquants: ${champsManquants.join(', ')}`);
+  }
+
   const data = await loadData();
 
   const newReleve: Releve = {
