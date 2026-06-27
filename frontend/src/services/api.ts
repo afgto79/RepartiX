@@ -98,6 +98,7 @@ export interface Reclamation {
   montantReclame: number;
   description: string;
   sourceReliquatId?: string;
+  dateEngagementFournisseur?: string; // YYYY-MM-DD
   createdAt: string;
 }
 
@@ -286,6 +287,7 @@ export const api = {
   async addReclamation(data: {
     moisDebut: string; moisFin: string; dateCreation: string;
     statut: string; montantReclame: number; description: string; sourceReliquatId?: string;
+    dateEngagementFournisseur?: string;
   }): Promise<Reclamation> {
     const res = await fetch(`${API_BASE}/reclamations`, {
       method: 'POST',
@@ -299,6 +301,7 @@ export const api = {
   async updateReclamation(id: string, data: Partial<{
     moisDebut: string; moisFin: string; dateCreation: string;
     statut: string; montantReclame: number; description: string;
+    dateEngagementFournisseur: string;
   }>): Promise<Reclamation> {
     const res = await fetch(`${API_BASE}/reclamations/${id}`, {
       method: 'PUT',

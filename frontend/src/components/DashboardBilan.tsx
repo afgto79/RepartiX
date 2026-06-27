@@ -38,7 +38,8 @@ export function DashboardBilan() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({
     moisDebut: '', moisFin: '', dateCreation: new Date().toISOString().slice(0, 10),
-    statut: 'en_attente' as Reclamation['statut'], montantReclame: '', description: ''
+    statut: 'en_attente' as Reclamation['statut'], montantReclame: '', description: '',
+    dateEngagementFournisseur: ''
   });
 
   useEffect(() => { loadAllData(); }, []);
@@ -113,7 +114,7 @@ export function DashboardBilan() {
 
   // --- CRUD ---
   function resetForm() {
-    setForm({ moisDebut: '', moisFin: '', dateCreation: new Date().toISOString().slice(0, 10), statut: 'en_attente', montantReclame: '', description: '' });
+    setForm({ moisDebut: '', moisFin: '', dateCreation: new Date().toISOString().slice(0, 10), statut: 'en_attente', montantReclame: '', description: '', dateEngagementFournisseur: '' });
     setEditId(null);
     setShowForm(false);
   }
@@ -125,7 +126,8 @@ export function DashboardBilan() {
       dateCreation: r.dateCreation,
       statut: r.statut,
       montantReclame: r.montantReclame.toString(),
-      description: r.description
+      description: r.description,
+      dateEngagementFournisseur: r.dateEngagementFournisseur ?? ''
     });
     setEditId(r.id);
     setShowForm(true);
@@ -140,7 +142,8 @@ export function DashboardBilan() {
         dateCreation: form.dateCreation,
         statut: form.statut,
         montantReclame: parseFloat(form.montantReclame),
-        description: form.description
+        description: form.description,
+        dateEngagementFournisseur: form.dateEngagementFournisseur || undefined
       };
       if (editId) {
         await api.updateReclamation(editId, data);
@@ -239,6 +242,11 @@ export function DashboardBilan() {
             <div>
               <label className="text-xs text-slate-500 block mb-1">Description</label>
               <input type="text" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
+                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" placeholder="Optionnel" />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500 block mb-1">Engagement ORPEC</label>
+              <input type="date" value={form.dateEngagementFournisseur} onChange={e => setForm({ ...form, dateEngagementFournisseur: e.target.value })}
                 className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" placeholder="Optionnel" />
             </div>
             <div className="col-span-full flex gap-2 mt-1">
@@ -351,6 +359,10 @@ export function DashboardBilan() {
           const regulsLiees = regularisations.filter(r => r.reclamationId === reclam.id);
           const jours = joursSince(reclam.dateCreation);
           const isStale = reclam.statut === 'en_attente' && jours > 30;
+          const joursRetardEngagement = reclam.dateEngagementFournisseur && reclam.statut !== 'soldee'
+            ? joursSince(reclam.dateEngagementFournisseur)
+            : null;
+          const enRetardEngagement = joursRetardEngagement !== null && joursRetardEngagement > 0;
           const borderColor = reclam.statut === 'en_cours' ? 'border-blue-200' : 'border-red-200';
           const yearShort = reclam.reference.match(/#(\d{4})/)?.[1]?.slice(2) || '??';
           const statusColor = reclam.statut === 'en_cours'
@@ -376,6 +388,12 @@ export function DashboardBilan() {
                       {isStale && (
                         <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded w-fit">
                           <span className="animate-pulse">&#9679;</span> Relance necessaire ({jours}j)
+                        </div>
+                      )}
+                      {enRetardEngagement && (
+                        <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded w-fit"
+                          title={`Engagement ORPEC du ${new Date(reclam.dateEngagementFournisseur!).toLocaleDateString('fr-FR')} depasse`}>
+                          &#9888; Retard {joursRetardEngagement} jour{joursRetardEngagement! > 1 ? 's' : ''}
                         </div>
                       )}
                     </div>

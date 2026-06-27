@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 // POST /api/reclamations
 router.post('/', async (req, res) => {
   try {
-    const { moisDebut, moisFin, dateCreation, statut, montantReclame, description } = req.body;
+    const { moisDebut, moisFin, dateCreation, statut, montantReclame, description, dateEngagementFournisseur } = req.body;
     if (!moisDebut || !moisFin || !dateCreation || !statut || montantReclame === undefined) {
       return res.status(400).json({ error: 'Champs requis: moisDebut, moisFin, dateCreation, statut, montantReclame' });
     }
@@ -27,7 +27,8 @@ router.post('/', async (req, res) => {
       dateCreation,
       statut,
       montantReclame: parseFloat(montantReclame),
-      description: description || ''
+      description: description || '',
+      ...(dateEngagementFournisseur ? { dateEngagementFournisseur } : {})
     });
     res.status(201).json(reclam);
   } catch (err) {
@@ -38,7 +39,7 @@ router.post('/', async (req, res) => {
 // PUT /api/reclamations/:id
 router.put('/:id', async (req, res) => {
   try {
-    const { moisDebut, moisFin, dateCreation, statut, montantReclame, description } = req.body;
+    const { moisDebut, moisFin, dateCreation, statut, montantReclame, description, dateEngagementFournisseur } = req.body;
     const updates: Record<string, unknown> = {};
     if (moisDebut !== undefined) updates.moisDebut = moisDebut;
     if (moisFin !== undefined) updates.moisFin = moisFin;
@@ -46,6 +47,7 @@ router.put('/:id', async (req, res) => {
     if (statut !== undefined) updates.statut = statut;
     if (montantReclame !== undefined) updates.montantReclame = parseFloat(String(montantReclame));
     if (description !== undefined) updates.description = description;
+    if (dateEngagementFournisseur !== undefined) updates.dateEngagementFournisseur = dateEngagementFournisseur || undefined;
 
     const reclam = await updateReclamation(req.params.id, updates);
     if (!reclam) {

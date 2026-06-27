@@ -63,6 +63,7 @@ export interface Reclamation {
   montantReclame: number;
   description: string;
   sourceReliquatId?: string;
+  dateEngagementFournisseur?: string; // YYYY-MM-DD - date promise par ORPEC (optionnel)
   createdAt: string;
 }
 
