@@ -24,6 +24,9 @@ backend/src/data/releves.json
 # Test files
 backend/test-parse.ts
 
+# Fixtures PDF (factures client - non versionnees, local uniquement)
+backend/tests/fixtures/*.pdf
+
 # OS files
 nul
 Thumbs.db
