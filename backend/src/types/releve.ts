@@ -87,15 +87,38 @@ export interface Reliquat {
   createdAt: string;
 }
 
-// Donnees mensuelles ORPEC (saisie manuelle depuis les documents PIEVE)
+// Remise annoncee par ORPEC pour un mois (facture ORPEC ou tableau PIEVE)
+export interface OrpecRemiseAnnoncee {
+  montantHT: number;
+  source: 'FACTURE_ORPEC' | 'TABLEAU_PIEVE';
+  reference?: string;          // ex: numero de facture
+}
+
+// Donnees mensuelles ORPEC (saisie manuelle depuis les documents PIEVE / factures ORPEC)
+// Deux blocs independants, chacun optionnel (un mois peut n'avoir que l'annonce) :
+// - bloc assiette (saisieMode + champs associes + assiette/remiseDue calculees)
+// - bloc annonce (remiseAnnoncee)
 export interface OrpecMoisData {
   source: 'PIEVE';
-  dateImport: string;          // ISO 8601
-  caHTorpec: number;
-  achatsGeneriques: number;
-  achatsAlvita: number;
-  assiette: number;            // calcule = caHTorpec - achatsGeneriques - achatsAlvita
-  remiseDue: number;           // calcule = assiette x 0.03
+  dateImport: string;          // ISO 8601 (derniere modification)
+  saisieMode?: 'DETAIL' | 'ASSIETTE_DIRECTE';
+  caHTorpec?: number;          // mode DETAIL
+  achatsGeneriques?: number;   // mode DETAIL
+  achatsAlvita?: number;       // mode DETAIL
+  ventesHT?: number;           // mode ASSIETTE_DIRECTE - colonne "Ventes" PIEVE (informatif)
+  assiette?: number;           // DETAIL: caHTorpec - generiques - Alvita ; ASSIETTE_DIRECTE: colonne "Sans RSF" saisie
+  remiseDue?: number;          // calcule = assiette x 0.03
+  remiseAnnoncee?: OrpecRemiseAnnoncee;
+}
+
+// Reference annuelle ORPEC (ex: 2025, non mensualisee - chiffres confirmes PIEVE)
+export interface OrpecAnnuelData {
+  source: string;              // ex: 'PIEVE'
+  dateImport: string;          // ISO 8601 (derniere modification)
+  assiette: number;
+  remiseDue: number;
+  remiseVersee: number;
+  delta: number;               // calcule = remiseVersee - remiseDue
 }
 
 export interface DataStore {
@@ -105,6 +128,7 @@ export interface DataStore {
   payments: Payment[];
   reliquats: Reliquat[];
   orpecData?: Record<string, OrpecMoisData>;  // cle = "YYYY-MM"
+  orpecAnnuel?: Record<string, OrpecAnnuelData>;  // cle = "YYYY"
   metadata: {
     lastUpdated: string;
     totalReleves: number;

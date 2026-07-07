@@ -72,10 +72,11 @@ function analyserMois(
 
   // Remise attendue : si donnees ORPEC (PIEVE) presentes pour ce mois, on utilise
   // l'assiette contractuelle reelle ; sinon estimation 3% sur assiette TTC Alliance.
+  // Un mois ORPEC sans bloc assiette (remiseAnnoncee seule) ne bascule pas en methode ORPEC.
   const orpecMois = orpecData?.[moisKey];
-  const orpecDisponible = orpecMois !== undefined;
+  const orpecDisponible = orpecMois?.remiseDue !== undefined;
   const methodeCalcul: 'ORPEC' | 'ALLIANCE_TTC' = orpecDisponible ? 'ORPEC' : 'ALLIANCE_TTC';
-  const remiseAttendue = orpecDisponible ? orpecMois!.remiseDue : assiette * 0.03;
+  const remiseAttendue = orpecDisponible ? orpecMois!.remiseDue! : assiette * 0.03;
 
   // Reversee = annoncee - frais (ce qui est reellement reverse net de frais)
   const reversee = remiseReelle - fraisGeneraux;
