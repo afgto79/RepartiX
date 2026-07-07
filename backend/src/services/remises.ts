@@ -99,6 +99,19 @@ function analyserMois(
     statut = 'RETARD';
   }
 
+  // Triptyque C5.3
+  const allianceTTC = arrondir(assiette * 0.03);
+  const orpecAssiette = orpecDisponible ? arrondir(orpecMois!.remiseDue!) : undefined;
+  const remiseAnnonceeVal = orpecMois?.remiseAnnoncee?.montantHT !== undefined
+    ? arrondir(orpecMois!.remiseAnnoncee!.montantHT)
+    : undefined;
+  const deltaCalcul = orpecAssiette !== undefined && remiseAnnonceeVal !== undefined
+    ? arrondir(orpecAssiette - remiseAnnonceeVal)
+    : undefined;
+  const deltaPaiement = remiseAnnonceeVal !== undefined && nextDecade3 !== undefined
+    ? arrondir(remiseAnnonceeVal - remiseReelle)
+    : undefined;
+
   return {
     mois: moisKey,
     totalHTMensuel: arrondir(totalTTCMensuel),
@@ -111,7 +124,14 @@ function analyserMois(
     statut,
     decadesPresentes,
     methodeCalcul,
-    orpecDisponible
+    orpecDisponible,
+    theoriques: {
+      orpecAssiette,
+      allianceTTC,
+    },
+    remiseAnnoncee: remiseAnnonceeVal,
+    deltaCalcul,
+    deltaPaiement,
   };
 }
 

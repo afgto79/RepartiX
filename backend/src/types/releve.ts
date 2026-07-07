@@ -34,6 +34,15 @@ export interface AnalyseRemise {
   decadesPresentes: number[];
   methodeCalcul: 'ORPEC' | 'ALLIANCE_TTC';
   orpecDisponible: boolean;
+  // Triptyque C5.3 — A=théorique, B=annoncé, C=versé
+  theoriques: {
+    orpecAssiette?: number;   // A1 : 3% × assiette Sans RSF saisie
+    girophamProxy?: number;   // A2 : non implémenté (REMISE_GENERIQUE non dispo dans décades)
+    allianceTTC: number;      // A3 : 3% × assiette TTC Alliance (estimation actuelle)
+  };
+  remiseAnnoncee?: number;    // B : montantHT depuis orpecMois.remiseAnnoncee
+  deltaCalcul?: number;       // A1 − B (positif = ORPEC a annoncé moins que le dû)
+  deltaPaiement?: number;     // B − C (positif = ORPEC a versé moins qu'annoncé)
 }
 
 export type RegularisationType =
