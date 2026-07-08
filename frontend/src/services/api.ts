@@ -175,6 +175,19 @@ export interface OrpecAnnuelData {
   delta: number;
 }
 
+export interface GeneriquesLaboMois {
+  annee: number;
+  mois: number;
+  laboratoire: string;
+  netHT: number;
+}
+
+export interface GeneriquesData {
+  source: string;
+  dateImport: string;
+  entrees: GeneriquesLaboMois[];
+}
+
 export interface ReleveRaw {
   id: string;
   annee: number;
@@ -493,5 +506,28 @@ export const api = {
   async deleteOrpecAnnuel(annee: string): Promise<void> {
     const res = await fetch(`${API_BASE}/orpec/annuel/${annee}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Erreur suppression reference annuelle ORPEC');
+  },
+
+  // --- Generiques par labo ---
+
+  async getGeneriques(): Promise<GeneriquesData | null> {
+    const res = await fetch(`${API_BASE}/generiques`);
+    if (!res.ok) throw new Error('Erreur chargement generiques');
+    return res.json();
+  },
+
+  async importGeneriques(data: Omit<GeneriquesData, 'dateImport'>): Promise<GeneriquesData> {
+    const res = await fetch(`${API_BASE}/generiques`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur import generiques');
+    return res.json();
+  },
+
+  async deleteGeneriques(): Promise<void> {
+    const res = await fetch(`${API_BASE}/generiques`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression generiques');
   }
 };

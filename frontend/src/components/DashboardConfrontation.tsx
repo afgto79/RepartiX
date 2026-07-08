@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { api, AnalyseRemise, OrpecAnnuelData } from '../services/api';
+import { useEffect, useRef, useState } from 'react';
+import { api, AnalyseRemise, GeneriquesData, OrpecAnnuelData } from '../services/api';
 import { formatEuros } from '../utils/formatters';
 
 const MOIS_COURTS = ['Jan.', 'Fev.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aout', 'Sept.', 'Oct.', 'Nov.', 'Dec.'];
@@ -49,6 +49,7 @@ function getQuarter(moisKey: string): number {
 
 interface QuarterAgg {
   sumA1: number | undefined;
+  sumA2: number | undefined;
   sumA3: number;
   sumB: number | undefined;
   sumC: number;
@@ -60,6 +61,7 @@ interface QuarterAgg {
 
 function aggregateQuarter(rows: AnalyseRemise[]): QuarterAgg {
   let sumA1: number | undefined;
+  let sumA2: number | undefined;
   let sumA3 = 0;
   let sumB: number | undefined;
   let sumC = 0;
@@ -76,6 +78,9 @@ function aggregateQuarter(rows: AnalyseRemise[]): QuarterAgg {
       sumA1 = (sumA1 ?? 0) + r.theoriques.orpecAssiette;
       hasA1 = true;
     }
+    if (r.theoriques?.girophamProxy !== undefined) {
+      sumA2 = (sumA2 ?? 0) + r.theoriques.girophamProxy;
+    }
     if (r.remiseAnnoncee !== undefined) {
       sumB = (sumB ?? 0) + r.remiseAnnoncee;
     }
@@ -88,7 +93,7 @@ function aggregateQuarter(rows: AnalyseRemise[]): QuarterAgg {
     }
   }
 
-  return { sumA1, sumA3, sumB, sumC, sumDeltaCalcul, sumDeltaPaiement, hasA1, hasDeltaPaiement };
+  return { sumA1, sumA2, sumA3, sumB, sumC, sumDeltaCalcul, sumDeltaPaiement, hasA1, hasDeltaPaiement };
 }
 
 function hasQuarterAlert(agg: QuarterAgg): boolean {
@@ -127,7 +132,7 @@ function exportCSV(annee: number, mois: AnalyseRemise[], orpecAnnuel: OrpecAnnue
     return [
       moisLabel,
       numFR(r.theoriques?.orpecAssiette),
-      'N/A',
+      numFR(r.theoriques?.girophamProxy),
       numFR(r.theoriques?.allianceTTC),
       numFR(r.remiseAnnoncee),
       numFR(r.remiseReelle),
@@ -160,9 +165,13 @@ export function DashboardConfrontation() {
   const [mois, setMois] = useState<AnalyseRemise[]>([]);
   const [orpecAnnuel, setOrpecAnnuel] = useState<OrpecAnnuelData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generiques, setGeneriques] = useState<GeneriquesData | null>(null);
+  const [generiquesLoading, setGeneriquesLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api.getAnnees().then(setYears).catch(console.error);
+    api.getGeneriques().then(setGeneriques).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -174,7 +183,33 @@ export function DashboardConfrontation() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [annee]);
+  }, [annee, generiques]);  // re-fetch quand generiques change
+
+  function handleImportGeneriques(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setGeneriquesLoading(true);
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      try {
+        const json = JSON.parse(ev.target?.result as string);
+        const result = await api.importGeneriques(json);
+        setGeneriques(result);
+      } catch (err) {
+        alert('Erreur import JSON : ' + (err instanceof Error ? err.message : String(err)));
+      } finally {
+        setGeneriquesLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  async function handleDeleteGeneriques() {
+    if (!confirm('Supprimer les données génériques ? A2 sera recalculé sans ces données.')) return;
+    await api.deleteGeneriques();
+    setGeneriques(null);
+  }
 
   // Group months by quarter
   const quarters: AnalyseRemise[][] = [[], [], [], []];
@@ -183,6 +218,9 @@ export function DashboardConfrontation() {
   // Annual totals
   const annualA1 = mois.some(m => m.theoriques?.orpecAssiette !== undefined)
     ? mois.reduce((s, m) => s + (m.theoriques?.orpecAssiette ?? 0), 0)
+    : undefined;
+  const annualA2 = mois.some(m => m.theoriques?.girophamProxy !== undefined)
+    ? mois.reduce((s, m) => s + (m.theoriques?.girophamProxy ?? 0), 0)
     : undefined;
   const annualA3 = mois.reduce((s, m) => s + (m.theoriques?.allianceTTC ?? 0), 0);
   const annualB = mois.some(m => m.remiseAnnoncee !== undefined)
@@ -205,10 +243,10 @@ export function DashboardConfrontation() {
         <div>
           <h2 className="text-base font-semibold text-slate-800">Triptyque A / B / C — {annee}</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            A1 = ORPEC (HT) · A2 = Giropharm (N/A) · A3 = Alliance TTC · B = Annoncé (HT) · C = Versé (TTC)
+            A1 = ORPEC (HT) · A2 = Giropharm{generiques ? ` (${generiques.entrees.length} entrées)` : ' (N/A)'} · A3 = Alliance TTC · B = Annoncé (HT) · C = Versé (TTC)
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <select
             value={annee}
             onChange={e => setAnnee(parseInt(e.target.value))}
@@ -216,6 +254,25 @@ export function DashboardConfrontation() {
           >
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
+          {/* Import génériques */}
+          <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportGeneriques} />
+          {generiques ? (
+            <button
+              onClick={handleDeleteGeneriques}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+              title={`Importé le ${new Date(generiques.dateImport).toLocaleDateString('fr-FR')}`}
+            >
+              ✓ Génériques
+            </button>
+          ) : (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={generiquesLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors disabled:opacity-50"
+            >
+              {generiquesLoading ? '…' : '⊕ Importer génériques'}
+            </button>
+          )}
           {mois.length > 0 && (
             <button
               onClick={() => exportCSV(annee, mois, orpecAnnuel)}
@@ -273,7 +330,7 @@ export function DashboardConfrontation() {
                         <tr key={r.mois} className="hover:bg-slate-50 transition-colors">
                           <td className="px-4 py-2 text-slate-800 font-medium whitespace-nowrap">{moisLabel}</td>
                           <td className="px-3 py-2 text-right text-slate-600">{fmt(r.theoriques?.orpecAssiette)}</td>
-                          <td className="px-3 py-2 text-right text-slate-400 italic">N/A</td>
+                          <td className="px-3 py-2 text-right text-slate-600">{fmt(r.theoriques?.girophamProxy)}</td>
                           <td className="px-3 py-2 text-right text-slate-600">{fmt(r.theoriques?.allianceTTC)}</td>
                           <td className="px-3 py-2 text-right text-slate-600">{fmt(r.remiseAnnoncee)}</td>
                           <td className="px-3 py-2 text-right text-slate-600">{formatEuros(r.remiseReelle)}</td>
@@ -295,7 +352,7 @@ export function DashboardConfrontation() {
                         )}
                       </td>
                       <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{fmt(agg.sumA1)}</td>
-                      <td className="px-3 py-2 text-right text-[10px] text-slate-400 italic">N/A</td>
+                      <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{fmt(agg.sumA2)}</td>
                       <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{formatEuros(agg.sumA3)}</td>
                       <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{fmt(agg.sumB)}</td>
                       <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{formatEuros(agg.sumC)}</td>
@@ -313,7 +370,7 @@ export function DashboardConfrontation() {
                 <tr className="border-t-2 border-slate-300 bg-slate-100">
                   <td className="px-4 py-3 text-[10px] font-bold text-slate-700 uppercase tracking-wider">Total {annee}</td>
                   <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{fmt(annualA1)}</td>
-                  <td className="px-3 py-3 text-right text-[11px] text-slate-400 italic">N/A</td>
+                  <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{fmt(annualA2)}</td>
                   <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{formatEuros(annualA3)}</td>
                   <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{fmt(annualB)}</td>
                   <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{formatEuros(annualC)}</td>
@@ -363,7 +420,7 @@ export function DashboardConfrontation() {
         <p className="text-[10px] text-slate-500 font-semibold mb-1.5">Légende</p>
         <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px] text-slate-500">
           <span><strong>A1</strong> = 3% × assiette ORPEC Sans RSF (HT, saisie PIEVE)</span>
-          <span><strong>A2</strong> = proxy Giropharm — données à importer (C5.3-bis)</span>
+          <span><strong>A2</strong> = proxy Giropharm : 3% × (debitHT − CA génériques ≥350€/labo − Alvita)</span>
           <span><strong>A3</strong> = 3% × assiette Alliance TTC (estimation)</span>
           <span><strong>B</strong> = remise annoncée sur facture ORPEC / tableau PIEVE (HT)</span>
           <span><strong>C</strong> = remise D3 mois M+1 (TTC — décalage M−1 confirmé)</span>

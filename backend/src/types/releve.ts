@@ -126,6 +126,20 @@ export interface OrpecMoisData {
   remiseAnnoncee?: OrpecRemiseAnnoncee;
 }
 
+// Donnees generiques par labo et par mois (source : GENERIQUES_ORPEC_2025_2026)
+export interface GeneriquesLaboMois {
+  annee: number;
+  mois: number;       // 1-12
+  laboratoire: string;
+  netHT: number;
+}
+
+export interface GeneriquesData {
+  source: string;
+  dateImport: string;
+  entrees: GeneriquesLaboMois[];
+}
+
 // Reference annuelle ORPEC (ex: 2025, non mensualisee - chiffres confirmes PIEVE)
 export interface OrpecAnnuelData {
   source: string;              // ex: 'PIEVE'
@@ -144,6 +158,7 @@ export interface DataStore {
   reliquats: Reliquat[];
   orpecData?: Record<string, OrpecMoisData>;  // cle = "YYYY-MM"
   orpecAnnuel?: Record<string, OrpecAnnuelData>;  // cle = "YYYY"
+  generiques?: GeneriquesData;
   metadata: {
     lastUpdated: string;
     totalReleves: number;

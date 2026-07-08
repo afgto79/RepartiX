@@ -16,7 +16,7 @@ router.get('/dashboard', async (req, res) => {
       getReleves({ annee: annee + 1 }),
       loadData()
     ]);
-    const analyses = calculerRemisesMensuelles([...releves, ...relevesNext], data.orpecData)
+    const analyses = calculerRemisesMensuelles([...releves, ...relevesNext], data.orpecData, data.generiques)
       .filter(a => a.mois.startsWith(`${annee}-`));
 
     res.json({
@@ -38,7 +38,7 @@ router.get('/cumul', async (_req, res) => {
   try {
     const releves = await getReleves();
     const data = await loadData();
-    const analyses = calculerRemisesMensuelles(releves, data.orpecData);
+    const analyses = calculerRemisesMensuelles(releves, data.orpecData, data.generiques);
     const payments = await getPayments();
     const regularisations = data.regularisations;
 

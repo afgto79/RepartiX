@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { Releve, Regularisation, Reclamation, Payment, Reliquat, OrpecMoisData, OrpecRemiseAnnoncee, OrpecAnnuelData, DataStore } from '../types/releve';
+import { Releve, Regularisation, Reclamation, Payment, Reliquat, OrpecMoisData, OrpecRemiseAnnoncee, OrpecAnnuelData, GeneriquesData, DataStore } from '../types/releve';
 
 const DATA_FILE = path.join(__dirname, '../data/releves.json');
 
@@ -466,6 +466,28 @@ export async function deleteOrpecAnnuel(annee: string): Promise<boolean> {
   const data = await loadData();
   if (!data.orpecAnnuel || !(annee in data.orpecAnnuel)) return false;
   delete data.orpecAnnuel[annee];
+  await saveData(data);
+  return true;
+}
+
+// --- Generiques par labo (seuil 350 €/labo/mois) ---
+
+export async function getGeneriques(): Promise<GeneriquesData | null> {
+  const data = await loadData();
+  return data.generiques ?? null;
+}
+
+export async function setGeneriques(gdata: GeneriquesData): Promise<GeneriquesData> {
+  const data = await loadData();
+  data.generiques = gdata;
+  await saveData(data);
+  return gdata;
+}
+
+export async function deleteGeneriques(): Promise<boolean> {
+  const data = await loadData();
+  if (!data.generiques) return false;
+  delete data.generiques;
   await saveData(data);
   return true;
 }
