@@ -13,6 +13,20 @@ export interface AnalyseRemise {
   decadesPresentes: number[];
   methodeCalcul: 'ORPEC' | 'ALLIANCE_TTC';
   orpecDisponible: boolean;
+  // Triptyque C5.3
+  theoriques?: {
+    orpecAssiette?: number;
+    girophamProxy?: number;
+    allianceTTC: number;
+  };
+  remiseAnnoncee?: number;
+  deltaCalcul?: number;
+  deltaPaiement?: number;
+  crossCheck?: {
+    statut: 'matched' | 'mismatch' | 'no_announce' | 'no_payment';
+    ecart?: number;
+    tolerance: number;
+  };
 }
 
 export interface UploadResponse {
@@ -25,6 +39,7 @@ export interface UploadResponse {
 export interface DashboardResponse {
   annee: number;
   mois: AnalyseRemise[];
+  orpecAnnuel?: OrpecAnnuelData | null;
 }
 
 export interface DecadeDetail {
@@ -122,14 +137,55 @@ export interface Payment {
   createdAt: string;
 }
 
+export interface OrpecRemiseAnnoncee {
+  montantHT: number;
+  source: 'FACTURE_ORPEC' | 'TABLEAU_PIEVE';
+  reference?: string;
+}
+
 export interface OrpecMoisData {
   source: 'PIEVE';
   dateImport: string;
-  caHTorpec: number;
-  achatsGeneriques: number;
-  achatsAlvita: number;
+  saisieMode?: 'DETAIL' | 'ASSIETTE_DIRECTE';
+  caHTorpec?: number;
+  achatsGeneriques?: number;
+  achatsAlvita?: number;
+  ventesHT?: number;
+  assiette?: number;
+  remiseDue?: number;
+  remiseAnnoncee?: OrpecRemiseAnnoncee;
+}
+
+export interface OrpecPutPayload {
+  saisieMode?: 'DETAIL' | 'ASSIETTE_DIRECTE';
+  caHTorpec?: number;
+  achatsGeneriques?: number;
+  achatsAlvita?: number;
+  assiette?: number;
+  ventesHT?: number;
+  remiseAnnoncee?: OrpecRemiseAnnoncee | null;
+}
+
+export interface OrpecAnnuelData {
+  source: string;
+  dateImport: string;
   assiette: number;
   remiseDue: number;
+  remiseVersee: number;
+  delta: number;
+}
+
+export interface GeneriquesLaboMois {
+  annee: number;
+  mois: number;
+  laboratoire: string;
+  netHT: number;
+}
+
+export interface GeneriquesData {
+  source: string;
+  dateImport: string;
+  entrees: GeneriquesLaboMois[];
 }
 
 export interface ReleveRaw {
@@ -410,10 +466,7 @@ export const api = {
     return res.json();
   },
 
-  async putOrpec(
-    mois: string,
-    data: { caHTorpec: number; achatsGeneriques: number; achatsAlvita: number }
-  ): Promise<OrpecMoisData> {
+  async putOrpec(mois: string, data: OrpecPutPayload): Promise<OrpecMoisData | null> {
     const res = await fetch(`${API_BASE}/orpec/${mois}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -426,5 +479,55 @@ export const api = {
   async deleteOrpec(mois: string): Promise<void> {
     const res = await fetch(`${API_BASE}/orpec/${mois}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Erreur suppression donnees ORPEC');
+  },
+
+  // --- Reference annuelle ORPEC ---
+
+  async getOrpecAnnuel(annee: string): Promise<OrpecAnnuelData | null> {
+    const res = await fetch(`${API_BASE}/orpec/annuel/${annee}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Erreur chargement reference annuelle ORPEC');
+    return res.json();
+  },
+
+  async putOrpecAnnuel(
+    annee: string,
+    data: { assiette: number; remiseDue: number; remiseVersee: number; source?: string }
+  ): Promise<OrpecAnnuelData> {
+    const res = await fetch(`${API_BASE}/orpec/annuel/${annee}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur sauvegarde reference annuelle ORPEC');
+    return res.json();
+  },
+
+  async deleteOrpecAnnuel(annee: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/orpec/annuel/${annee}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression reference annuelle ORPEC');
+  },
+
+  // --- Generiques par labo ---
+
+  async getGeneriques(): Promise<GeneriquesData | null> {
+    const res = await fetch(`${API_BASE}/generiques`);
+    if (!res.ok) throw new Error('Erreur chargement generiques');
+    return res.json();
+  },
+
+  async importGeneriques(data: Omit<GeneriquesData, 'dateImport'>): Promise<GeneriquesData> {
+    const res = await fetch(`${API_BASE}/generiques`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Erreur import generiques');
+    return res.json();
+  },
+
+  async deleteGeneriques(): Promise<void> {
+    const res = await fetch(`${API_BASE}/generiques`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression generiques');
   }
 };

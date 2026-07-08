@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { Releve, Regularisation, Reclamation, Payment, Reliquat, OrpecMoisData, DataStore } from '../types/releve';
+import { Releve, Regularisation, Reclamation, Payment, Reliquat, OrpecMoisData, OrpecRemiseAnnoncee, OrpecAnnuelData, GeneriquesData, DataStore } from '../types/releve';
 
 const DATA_FILE = path.join(__dirname, '../data/releves.json');
 
@@ -29,6 +29,10 @@ export async function loadData(): Promise<DataStore> {
     // Migration: ajouter orpecData si absent
     if (!data.orpecData) {
       data.orpecData = {};
+    }
+    // Migration: ajouter orpecAnnuel si absent
+    if (!data.orpecAnnuel) {
+      data.orpecAnnuel = {};
     }
     // Migration: qualifier les regularisations sans type
     // (montant > 0 -> versement recu ; sinon -> frais a qualifier manuellement)
@@ -357,28 +361,65 @@ export async function getOrpecData(mois: string): Promise<OrpecMoisData | null> 
   return data.orpecData?.[mois] ?? null;
 }
 
+// Saisie du bloc assiette, selon le mode :
+// - DETAIL : ventilation CA/generiques/Alvita (assiette calculee)
+// - ASSIETTE_DIRECTE : colonne "Sans RSF" du tableau PIEVE saisie telle quelle
+export type OrpecAssietteInput =
+  | { saisieMode: 'DETAIL'; caHTorpec: number; achatsGeneriques: number; achatsAlvita: number }
+  | { saisieMode: 'ASSIETTE_DIRECTE'; assiette: number; ventesHT?: number };
+
+// Fusion par bloc : chaque bloc fourni remplace l'existant, un bloc absent est conserve.
+// remiseAnnoncee: null = retrait explicite de l'annonce.
+// Retourne null si l'entree devient vide (mois supprime).
 export async function setOrpecData(
   mois: string,
-  fields: { caHTorpec: number; achatsGeneriques: number; achatsAlvita: number }
-): Promise<OrpecMoisData> {
+  fields: { assiette?: OrpecAssietteInput; remiseAnnoncee?: OrpecRemiseAnnoncee | null }
+): Promise<OrpecMoisData | null> {
   const data = await loadData();
   if (!data.orpecData) data.orpecData = {};
 
-  const caHTorpec = fields.caHTorpec;
-  const achatsGeneriques = fields.achatsGeneriques;
-  const achatsAlvita = fields.achatsAlvita;
-  const assiette = caHTorpec - achatsGeneriques - achatsAlvita;
-  const remiseDue = Math.round(assiette * 0.03 * 100) / 100;
-
   const entry: OrpecMoisData = {
+    ...(data.orpecData[mois] ?? {}),
     source: 'PIEVE',
-    dateImport: new Date().toISOString(),
-    caHTorpec,
-    achatsGeneriques,
-    achatsAlvita,
-    assiette: Math.round(assiette * 100) / 100,
-    remiseDue
+    dateImport: new Date().toISOString()
   };
+
+  if (fields.assiette) {
+    delete entry.caHTorpec;
+    delete entry.achatsGeneriques;
+    delete entry.achatsAlvita;
+    delete entry.ventesHT;
+
+    if (fields.assiette.saisieMode === 'DETAIL') {
+      const { caHTorpec, achatsGeneriques, achatsAlvita } = fields.assiette;
+      const assiette = caHTorpec - achatsGeneriques - achatsAlvita;
+      entry.saisieMode = 'DETAIL';
+      entry.caHTorpec = caHTorpec;
+      entry.achatsGeneriques = achatsGeneriques;
+      entry.achatsAlvita = achatsAlvita;
+      entry.assiette = Math.round(assiette * 100) / 100;
+      entry.remiseDue = Math.round(assiette * 0.03 * 100) / 100;
+    } else {
+      entry.saisieMode = 'ASSIETTE_DIRECTE';
+      if (fields.assiette.ventesHT !== undefined) entry.ventesHT = fields.assiette.ventesHT;
+      entry.assiette = Math.round(fields.assiette.assiette * 100) / 100;
+      entry.remiseDue = Math.round(fields.assiette.assiette * 0.03 * 100) / 100;
+    }
+  }
+
+  if (fields.remiseAnnoncee !== undefined) {
+    if (fields.remiseAnnoncee === null) {
+      delete entry.remiseAnnoncee;
+    } else {
+      entry.remiseAnnoncee = fields.remiseAnnoncee;
+    }
+  }
+
+  if (entry.saisieMode === undefined && entry.remiseAnnoncee === undefined) {
+    delete data.orpecData[mois];
+    await saveData(data);
+    return null;
+  }
 
   data.orpecData[mois] = entry;
   await saveData(data);
@@ -389,6 +430,64 @@ export async function deleteOrpecData(mois: string): Promise<boolean> {
   const data = await loadData();
   if (!data.orpecData || !(mois in data.orpecData)) return false;
   delete data.orpecData[mois];
+  await saveData(data);
+  return true;
+}
+
+// --- Reference annuelle ORPEC CRUD ---
+
+export async function getOrpecAnnuel(annee: string): Promise<OrpecAnnuelData | null> {
+  const data = await loadData();
+  return data.orpecAnnuel?.[annee] ?? null;
+}
+
+export async function setOrpecAnnuel(
+  annee: string,
+  fields: { assiette: number; remiseDue: number; remiseVersee: number; source?: string }
+): Promise<OrpecAnnuelData> {
+  const data = await loadData();
+  if (!data.orpecAnnuel) data.orpecAnnuel = {};
+
+  const entry: OrpecAnnuelData = {
+    source: fields.source ?? 'PIEVE',
+    dateImport: new Date().toISOString(),
+    assiette: fields.assiette,
+    remiseDue: fields.remiseDue,
+    remiseVersee: fields.remiseVersee,
+    delta: Math.round((fields.remiseVersee - fields.remiseDue) * 100) / 100
+  };
+
+  data.orpecAnnuel[annee] = entry;
+  await saveData(data);
+  return entry;
+}
+
+export async function deleteOrpecAnnuel(annee: string): Promise<boolean> {
+  const data = await loadData();
+  if (!data.orpecAnnuel || !(annee in data.orpecAnnuel)) return false;
+  delete data.orpecAnnuel[annee];
+  await saveData(data);
+  return true;
+}
+
+// --- Generiques par labo (seuil 350 €/labo/mois) ---
+
+export async function getGeneriques(): Promise<GeneriquesData | null> {
+  const data = await loadData();
+  return data.generiques ?? null;
+}
+
+export async function setGeneriques(gdata: GeneriquesData): Promise<GeneriquesData> {
+  const data = await loadData();
+  data.generiques = gdata;
+  await saveData(data);
+  return gdata;
+}
+
+export async function deleteGeneriques(): Promise<boolean> {
+  const data = await loadData();
+  if (!data.generiques) return false;
+  delete data.generiques;
   await saveData(data);
   return true;
 }

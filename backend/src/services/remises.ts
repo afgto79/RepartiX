@@ -1,4 +1,6 @@
-import { Releve, AnalyseRemise, OrpecMoisData } from '../types/releve';
+import { Releve, AnalyseRemise, OrpecMoisData, GeneriquesData } from '../types/releve';
+
+const SEUIL_GENERIQUES_LABO = 350;
 
 /**
  * Calcule les analyses de remises pour tous les mois disponibles.
@@ -8,12 +10,13 @@ import { Releve, AnalyseRemise, OrpecMoisData } from '../types/releve';
  */
 export function calculerRemisesMensuelles(
   releves: Releve[],
-  orpecData?: Record<string, OrpecMoisData>
+  orpecData?: Record<string, OrpecMoisData>,
+  generiquesData?: GeneriquesData | null
 ): AnalyseRemise[] {
   const groupes = grouperParMois(releves);
 
   return Object.entries(groupes)
-    .map(([moisKey, decades]) => analyserMois(moisKey, decades, groupes, orpecData))
+    .map(([moisKey, decades]) => analyserMois(moisKey, decades, groupes, orpecData, generiquesData))
     .sort((a, b) => a.mois.localeCompare(b.mois));
 }
 
@@ -42,7 +45,8 @@ function analyserMois(
   moisKey: string,
   decades: Releve[],
   groupes: Record<string, Releve[]>,
-  orpecData?: Record<string, OrpecMoisData>
+  orpecData?: Record<string, OrpecMoisData>,
+  generiquesData?: GeneriquesData | null
 ): AnalyseRemise {
   // Somme des Total TTC des decades presentes (base de calcul TTC)
   const totalTTCMensuel = decades.reduce((sum, d) => sum + (d.totalTTC ?? 0), 0);
@@ -72,10 +76,11 @@ function analyserMois(
 
   // Remise attendue : si donnees ORPEC (PIEVE) presentes pour ce mois, on utilise
   // l'assiette contractuelle reelle ; sinon estimation 3% sur assiette TTC Alliance.
+  // Un mois ORPEC sans bloc assiette (remiseAnnoncee seule) ne bascule pas en methode ORPEC.
   const orpecMois = orpecData?.[moisKey];
-  const orpecDisponible = orpecMois !== undefined;
+  const orpecDisponible = orpecMois?.remiseDue !== undefined;
   const methodeCalcul: 'ORPEC' | 'ALLIANCE_TTC' = orpecDisponible ? 'ORPEC' : 'ALLIANCE_TTC';
-  const remiseAttendue = orpecDisponible ? orpecMois!.remiseDue : assiette * 0.03;
+  const remiseAttendue = orpecDisponible ? orpecMois!.remiseDue! : assiette * 0.03;
 
   // Reversee = annoncee - frais (ce qui est reellement reverse net de frais)
   const reversee = remiseReelle - fraisGeneraux;
@@ -98,6 +103,53 @@ function analyserMois(
     statut = 'RETARD';
   }
 
+  // Triptyque C5.3
+  const allianceTTC = arrondir(assiette * 0.03);
+  const orpecAssiette = orpecDisponible ? arrondir(orpecMois!.remiseDue!) : undefined;
+
+  // A2 Giropharm proxy : 3% × (debitHT mensuel − CA_generiques(≥350€/labo) − achatsAlvita)
+  let girophamProxy: number | undefined;
+  if (generiquesData) {
+    const [anneeNum, moisNum] = moisKey.split('-').map(Number);
+    const caGeneriques = generiquesData.entrees
+      .filter(e => e.annee === anneeNum && e.mois === moisNum && e.netHT >= SEUIL_GENERIQUES_LABO)
+      .reduce((s, e) => s + e.netHT, 0);
+    const debitHTMensuel = decades.reduce((s, d) => s + (d.debitHT ?? 0), 0);
+    const alvita = orpecMois?.achatsAlvita ?? 0;
+    girophamProxy = arrondir((debitHTMensuel - caGeneriques - alvita) * 0.03);
+  }
+  const remiseAnnonceeVal = orpecMois?.remiseAnnoncee?.montantHT !== undefined
+    ? arrondir(orpecMois!.remiseAnnoncee!.montantHT)
+    : undefined;
+  const deltaCalcul = orpecAssiette !== undefined && remiseAnnonceeVal !== undefined
+    ? arrondir(orpecAssiette - remiseAnnonceeVal)
+    : undefined;
+  const deltaPaiement = remiseAnnonceeVal !== undefined && nextDecade3 !== undefined
+    ? arrondir(remiseAnnonceeVal - remiseReelle)
+    : undefined;
+
+  // C5.4 — cross-check B(annoncé HT) ↔ C(versé HT), tolérance 0,50 €
+  // On compare en HT des deux côtés : remiseAnnoncee(B) est HT (facture ORPEC),
+  // et on utilise remiseAbnMargeHT (pas TTC) pour C afin de rester sur la même base.
+  // remiseReelle (TTC, champ existant pré-C5.3) n'est pas modifié.
+  const TOLERANCE = 0.50;
+  const remiseReelleHT = nextDecade3 !== undefined
+    ? Math.abs(nextDecade3.remiseAbnMargeHT ?? 0)
+    : 0;
+  let crossCheck: AnalyseRemise['crossCheck'];
+  if (remiseAnnonceeVal === undefined) {
+    crossCheck = { statut: 'no_announce', tolerance: TOLERANCE };
+  } else if (nextDecade3 === undefined) {
+    crossCheck = { statut: 'no_payment', tolerance: TOLERANCE };
+  } else {
+    const ecart = arrondir(remiseAnnonceeVal - remiseReelleHT);
+    crossCheck = {
+      statut: Math.abs(ecart) <= TOLERANCE ? 'matched' : 'mismatch',
+      ecart,
+      tolerance: TOLERANCE,
+    };
+  }
+
   return {
     mois: moisKey,
     totalHTMensuel: arrondir(totalTTCMensuel),
@@ -110,7 +162,16 @@ function analyserMois(
     statut,
     decadesPresentes,
     methodeCalcul,
-    orpecDisponible
+    orpecDisponible,
+    theoriques: {
+      orpecAssiette,
+      girophamProxy,
+      allianceTTC,
+    },
+    remiseAnnoncee: remiseAnnonceeVal,
+    deltaCalcul,
+    deltaPaiement,
+    crossCheck,
   };
 }
 

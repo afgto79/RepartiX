@@ -3,14 +3,16 @@ import { AppLayout } from './components/AppLayout';
 import { PageAccueil } from './pages/PageAccueil';
 import { PageReclamations } from './pages/PageReclamations';
 import { PageDonnees } from './pages/PageDonnees';
+import { DashboardConfrontation } from './components/DashboardConfrontation';
 import { api } from './services/api';
 
-type Page = 'accueil' | 'reclamations' | 'donnees';
+type Page = 'accueil' | 'reclamations' | 'donnees' | 'confrontation';
 
 const PAGE_TITLES: Record<Page, string> = {
   accueil: 'Accueil',
   reclamations: 'Réclamations',
-  donnees: 'Données'
+  donnees: 'Données',
+  confrontation: 'Confrontation Triptyque'
 };
 
 function App() {
@@ -49,6 +51,7 @@ function App() {
       {page === 'accueil' && <PageAccueil onNavigate={setPage} />}
       {page === 'reclamations' && <PageReclamations />}
       {page === 'donnees' && <PageDonnees />}
+      {page === 'confrontation' && <DashboardConfrontation />}
     </AppLayout>
   );
 }
