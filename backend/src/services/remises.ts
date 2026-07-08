@@ -112,6 +112,28 @@ function analyserMois(
     ? arrondir(remiseAnnonceeVal - remiseReelle)
     : undefined;
 
+  // C5.4 — cross-check B(annoncé HT) ↔ C(versé HT), tolérance 0,50 €
+  // On compare en HT des deux côtés : remiseAnnoncee(B) est HT (facture ORPEC),
+  // et on utilise remiseAbnMargeHT (pas TTC) pour C afin de rester sur la même base.
+  // remiseReelle (TTC, champ existant pré-C5.3) n'est pas modifié.
+  const TOLERANCE = 0.50;
+  const remiseReelleHT = nextDecade3 !== undefined
+    ? Math.abs(nextDecade3.remiseAbnMargeHT ?? 0)
+    : 0;
+  let crossCheck: AnalyseRemise['crossCheck'];
+  if (remiseAnnonceeVal === undefined) {
+    crossCheck = { statut: 'no_announce', tolerance: TOLERANCE };
+  } else if (nextDecade3 === undefined) {
+    crossCheck = { statut: 'no_payment', tolerance: TOLERANCE };
+  } else {
+    const ecart = arrondir(remiseAnnonceeVal - remiseReelleHT);
+    crossCheck = {
+      statut: Math.abs(ecart) <= TOLERANCE ? 'matched' : 'mismatch',
+      ecart,
+      tolerance: TOLERANCE,
+    };
+  }
+
   return {
     mois: moisKey,
     totalHTMensuel: arrondir(totalTTCMensuel),
@@ -132,6 +154,7 @@ function analyserMois(
     remiseAnnoncee: remiseAnnonceeVal,
     deltaCalcul,
     deltaPaiement,
+    crossCheck,
   };
 }
 

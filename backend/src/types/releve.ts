@@ -43,6 +43,12 @@ export interface AnalyseRemise {
   remiseAnnoncee?: number;    // B : montantHT depuis orpecMois.remiseAnnoncee
   deltaCalcul?: number;       // A1 − B (positif = ORPEC a annoncé moins que le dû)
   deltaPaiement?: number;     // B − C (positif = ORPEC a versé moins qu'annoncé)
+  // C5.4 — rapprochement automatique B(HT) ↔ C(HT) — utilise remiseAbnMargeHT (pas TTC)
+  crossCheck?: {
+    statut: 'matched' | 'mismatch' | 'no_announce' | 'no_payment';
+    ecart?: number;       // remiseAnnoncee(B,HT) − remiseAbnMargeHT(C,HT)
+    tolerance: number;    // seuil utilisé (0,50 €)
+  };
 }
 
 export type RegularisationType =
