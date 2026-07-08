@@ -21,7 +21,8 @@ router.get('/dashboard', async (req, res) => {
 
     res.json({
       annee,
-      mois: analyses
+      mois: analyses,
+      orpecAnnuel: data.orpecAnnuel?.[String(annee)] ?? null
     });
   } catch (err) {
     console.error('[Stats] Erreur dashboard:', err);

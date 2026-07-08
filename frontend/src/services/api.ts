@@ -13,6 +13,20 @@ export interface AnalyseRemise {
   decadesPresentes: number[];
   methodeCalcul: 'ORPEC' | 'ALLIANCE_TTC';
   orpecDisponible: boolean;
+  // Triptyque C5.3
+  theoriques?: {
+    orpecAssiette?: number;
+    girophamProxy?: number;
+    allianceTTC: number;
+  };
+  remiseAnnoncee?: number;
+  deltaCalcul?: number;
+  deltaPaiement?: number;
+  crossCheck?: {
+    statut: 'matched' | 'mismatch' | 'no_announce' | 'no_payment';
+    ecart?: number;
+    tolerance: number;
+  };
 }
 
 export interface UploadResponse {
@@ -25,6 +39,7 @@ export interface UploadResponse {
 export interface DashboardResponse {
   annee: number;
   mois: AnalyseRemise[];
+  orpecAnnuel?: OrpecAnnuelData | null;
 }
 
 export interface DecadeDetail {
