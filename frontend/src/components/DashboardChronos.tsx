@@ -53,10 +53,8 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
   const moisOK = data.filter(d => d.statut === 'OK').length;
   const tauxConformite = data.length > 0 ? Math.round((moisOK / data.length) * 100) : 0;
 
-  // Regularisations de l'annee pour la timeline
   const regulsAnnee = regularisations.filter(r => r.annee === annee);
 
-  // Construire la timeline : mois + reguls intercales par date
   type TimelineItem = { type: 'mois'; data: AnalyseRemise } | { type: 'regul'; data: Regularisation };
   const timeline: TimelineItem[] = [];
   for (const d of data) {
@@ -65,7 +63,6 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
   for (const r of regulsAnnee) {
     timeline.push({ type: 'regul', data: r });
   }
-  // Tri par date
   timeline.sort((a, b) => {
     const dateA = a.type === 'mois' ? a.data.mois : (a.data as Regularisation).date;
     const dateB = b.type === 'mois' ? b.data.mois : (b.data as Regularisation).date;
@@ -87,7 +84,8 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
           <select
             value={annee}
             onChange={e => setAnnee(parseInt(e.target.value))}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg bg-white text-sm"
+            className="px-3 py-1.5 border border-gray-300 bg-white text-sm"
+            style={{ borderRadius: '4px' }}
           >
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
@@ -95,49 +93,61 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
       </div>
 
       {/* Situation globale compacte */}
-      <div className="mb-8 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="mb-8 bg-white border border-slate-200 p-6" style={{ borderRadius: '4px' }}>
         <div className="grid grid-cols-4 gap-8">
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Retard total</p>
-            <div className={`text-3xl font-bold ${cumul && cumul.resteDu < -0.01 ? 'text-red-600' : 'text-green-600'}`}>
+            <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: '#94A3B8' }}>Retard total</p>
+            <div
+              className="text-3xl font-bold data-val"
+              style={{ color: cumul && cumul.resteDu < -0.01 ? '#991B1B' : '#1B6B40' }}
+            >
               {cumul ? formatEuros(cumul.resteDu) : '-'}
             </div>
             <p className="text-xs text-gray-500 mt-1">Toutes annees</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Regularise</p>
-            <div className="text-3xl font-bold text-green-600">
+            <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: '#94A3B8' }}>Regularise</p>
+            <div className="text-3xl font-bold data-val" style={{ color: '#1B6B40' }}>
               {cumul ? `+${formatEuros(cumul.regulTotal)}` : '-'}
             </div>
             {cumul && cumul.deltaCumulTotal < 0 && (
               <div className="mt-2 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-green-500 h-full" style={{ width: `${Math.min(100, (cumul.regulTotal / Math.abs(cumul.deltaCumulTotal)) * 100)}%` }} />
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${Math.min(100, (cumul.regulTotal / Math.abs(cumul.deltaCumulTotal)) * 100)}%`,
+                    backgroundColor: '#1B6B40'
+                  }}
+                />
               </div>
             )}
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Annee {annee}</p>
-            <div className={`text-3xl font-bold ${resteAnnuel < -0.01 ? 'text-orange-600' : 'text-green-600'}`}>
+            <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: '#94A3B8' }}>Annee {annee}</p>
+            <div
+              className="text-3xl font-bold data-val"
+              style={{ color: resteAnnuel < -0.01 ? '#C05621' : '#1B6B40' }}
+            >
               {formatEuros(resteAnnuel)}
             </div>
             <p className="text-xs text-gray-500 mt-1">{moisComplets} mois comptabilise{moisComplets > 1 ? 's' : ''}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Taux conformite</p>
-            <div className="text-3xl font-bold text-gray-900">{tauxConformite}%</div>
+            <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: '#94A3B8' }}>Taux conformite</p>
+            <div className="text-3xl font-bold text-gray-900 data-val">{tauxConformite}%</div>
             <p className="text-xs text-gray-500 mt-1">{moisOK}/{data.length} mois OK</p>
           </div>
         </div>
       </div>
 
       {/* Timeline */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div className="bg-white border border-slate-200" style={{ borderRadius: '4px' }}>
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Timeline {annee}</h2>
           <div className="flex items-center gap-4">
             <div className="flex gap-3 text-xs">
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#1B6B40' }} />
                 <span className="text-gray-600">OK</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -145,7 +155,7 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
                 <span className="text-gray-600">En cours</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 bg-red-500 rounded-full" />
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#991B1B' }} />
                 <span className="text-gray-600">Retard</span>
               </div>
             </div>
@@ -167,17 +177,25 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
                     return (
                       <div key={`regul-${r.id}`} className="relative flex gap-6">
                         <div className="flex-shrink-0 w-12 flex flex-col items-center">
-                          <div className="w-3 h-3 bg-green-500 rounded-full border-4 border-white shadow-md z-10" />
-                          <span className="text-xs font-medium text-green-600 mt-2">REGUL</span>
+                          <div
+                            className="w-3 h-3 rounded-full border-4 border-white shadow-md z-10"
+                            style={{ backgroundColor: '#1B6B40' }}
+                          />
+                          <span className="text-xs font-medium mt-2" style={{ color: '#1B6B40' }}>REGUL</span>
                         </div>
                         <div className="flex-1 pb-2">
-                          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                          <div
+                            className="p-4 border"
+                            style={{ backgroundColor: '#E8F5EE', borderRadius: '4px', borderColor: '#A7D7B8' }}
+                          >
                             <div className="flex items-start justify-between">
                               <div>
                                 <h3 className="font-semibold text-gray-900">{r.description || 'Regularisation'}</h3>
-                                <p className="text-sm text-gray-600 mt-1">{new Date(r.date).toLocaleDateString('fr-FR')}</p>
+                                <p className="text-sm text-gray-600 mt-1 data-val">{new Date(r.date).toLocaleDateString('fr-FR')}</p>
                               </div>
-                              <div className="text-lg font-bold text-green-600">+{formatEuros(r.montant)}</div>
+                              <div className="text-lg font-bold data-val" style={{ color: '#1B6B40' }}>
+                                +{formatEuros(r.montant)}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -187,9 +205,16 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
 
                   const d = item.data as AnalyseRemise;
                   const moisNum = parseInt(d.mois.split('-')[1]);
-                  const dotColor = d.statut === 'OK' ? 'bg-green-500' : d.statut === 'RETARD' ? 'bg-red-500' : 'bg-yellow-500';
-                  const bgColor = d.statut === 'OK' ? 'bg-green-50 border-green-200' : d.statut === 'RETARD' ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200';
-                  const deltaColor = d.delta < -0.01 ? 'text-red-600' : 'text-green-600';
+                  const dotStyle = d.statut === 'OK'
+                    ? { backgroundColor: '#1B6B40' }
+                    : d.statut === 'RETARD'
+                    ? { backgroundColor: '#991B1B' }
+                    : { backgroundColor: '#D97706' };
+                  const cardStyle = d.statut === 'OK'
+                    ? { backgroundColor: '#E8F5EE', border: '1px solid #A7D7B8', borderRadius: '4px' }
+                    : d.statut === 'RETARD'
+                    ? { backgroundColor: '#FFF5F5', border: '1px solid #FECACA', borderRadius: '4px' }
+                    : { backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '4px' };
 
                   return (
                     <div
@@ -198,18 +223,28 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
                       onClick={() => handleRowClick(d.mois)}
                     >
                       <div className="flex-shrink-0 w-12 flex flex-col items-center">
-                        <div className={`w-3 h-3 ${dotColor} rounded-full border-4 border-white shadow-md z-10`} />
+                        <div
+                          className="w-3 h-3 rounded-full border-4 border-white shadow-md z-10"
+                          style={dotStyle}
+                        />
                         <span className="text-xs font-medium text-gray-500 mt-2">{MOIS_SHORT[moisNum]}</span>
                       </div>
                       <div className="flex-1 pb-2">
-                        <div className={`${bgColor} rounded-lg p-4 border hover:shadow-md transition-shadow`}>
+                        <div className="p-4 hover:shadow-md transition-shadow" style={cardStyle}>
                           <div className="flex items-start justify-between mb-3">
                             <div>
                               <h3 className="font-semibold text-gray-900">{formatMoisLabel(d.mois)}</h3>
-                              <p className="text-sm text-gray-600 mt-1">Total HT: {formatEuros(d.totalHTMensuel)}</p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                Total HT: <span className="data-val">{formatEuros(d.totalHTMensuel)}</span>
+                              </p>
                             </div>
                             <div className="text-right">
-                              <div className={`text-lg font-bold ${deltaColor}`}>{formatEuros(d.delta)}</div>
+                              <div
+                                className="text-lg font-bold data-val"
+                                style={{ color: d.delta < -0.01 ? '#991B1B' : '#1B6B40' }}
+                              >
+                                {formatEuros(d.delta)}
+                              </div>
                               <p className="text-xs text-gray-500">
                                 {d.statut === 'OK' ? 'conforme' : d.statut === 'RETARD' ? 'de retard' : 'en cours'}
                               </p>
@@ -218,15 +253,15 @@ export function DashboardChronos({ onNavigateToMois }: DashboardChronosProps) {
                           <div className="grid grid-cols-3 gap-3 text-sm">
                             <div>
                               <p className="text-gray-500">Attendue</p>
-                              <p className="font-medium text-gray-900">{formatEuros(d.remiseAttendue)}</p>
+                              <p className="font-medium text-gray-900 data-val">{formatEuros(d.remiseAttendue)}</p>
                             </div>
                             <div>
                               <p className="text-gray-500">Reelle</p>
-                              <p className="font-medium text-gray-900">{formatEuros(d.remiseReelle)}</p>
+                              <p className="font-medium text-gray-900 data-val">{formatEuros(d.remiseReelle)}</p>
                             </div>
                             <div>
                               <p className="text-gray-500">Decades</p>
-                              <p className="font-medium text-gray-900">{d.decadesPresentes.join(', ')}</p>
+                              <p className="font-medium text-gray-900 data-val">{d.decadesPresentes.join(', ')}</p>
                             </div>
                           </div>
                         </div>
