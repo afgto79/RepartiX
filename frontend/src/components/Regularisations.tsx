@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Card, Badge } from '@tremor/react';
 import { api, Regularisation, RegularisationType } from '../services/api';
+import { formatEuros } from '../utils/formatters';
 
 const TYPE_OPTIONS: { value: RegularisationType; label: string }[] = [
   { value: 'VERSEMENT_RECU', label: 'Versement recu' },
@@ -8,7 +8,6 @@ const TYPE_OPTIONS: { value: RegularisationType; label: string }[] = [
   { value: 'CLAWBACK_GENERIQUES', label: 'Clawback generiques (non contestable)' },
   { value: 'FRAIS_AUTRE', label: 'Autre (a qualifier)' }
 ];
-import { formatEuros } from '../utils/formatters';
 
 interface RegularisationsProps {
   regularisations: Regularisation[];
@@ -79,22 +78,30 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
   const totalRegul = regularisations.reduce((sum, r) => sum + r.montant, 0);
 
   return (
-    <Card className="mb-4">
+    <div className="p-4">
       <div
         className="flex items-center justify-between cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold">Regularisations</span>
-          <Badge size="xs" color="blue">{regularisations.length}</Badge>
+          <span
+            className="px-1.5 py-0.5 text-xs font-medium"
+            style={{ backgroundColor: '#E8F5EE', color: '#1B6B40', borderRadius: '4px' }}
+          >
+            {regularisations.length}
+          </span>
           {totalRegul > 0 && (
-            <span className="text-sm text-green-600 font-medium">+{formatEuros(totalRegul)}</span>
+            <span className="text-sm font-medium data-val" style={{ color: '#1B6B40' }}>
+              +{formatEuros(totalRegul)}
+            </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={(e) => { e.stopPropagation(); setShowForm(!showForm); setExpanded(true); setEditId(null); }}
-            className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-2 py-1 text-xs text-white"
+            style={{ backgroundColor: '#1B6B40', borderRadius: '4px' }}
           >
             + Regularisation
           </button>
@@ -106,7 +113,7 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
         <div className="mt-3">
           {/* Formulaire ajout/edition */}
           {showForm && (
-            <form onSubmit={handleSubmit} className="mb-3 p-3 bg-gray-50 rounded-lg">
+            <form onSubmit={handleSubmit} className="mb-3 p-3" style={{ backgroundColor: '#E8F5EE', borderRadius: '4px' }}>
               <p className="text-xs font-semibold mb-2 text-gray-600">
                 {editId ? 'Modifier la regularisation' : 'Nouvelle regularisation'}
               </p>
@@ -157,7 +164,8 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                  className="px-3 py-1 text-xs text-white disabled:opacity-50"
+                  style={{ backgroundColor: '#1B6B40', borderRadius: '4px' }}
                 >
                   {saving ? 'Enregistrement...' : editId ? 'Modifier' : 'Ajouter'}
                 </button>
@@ -182,9 +190,14 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
                 .map(r => (
                   <div key={r.id} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50 text-sm">
                     <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs w-20">{new Date(r.date).toLocaleDateString('fr-FR')}</span>
-                      <span className="text-green-600 font-medium w-24 text-right">{formatEuros(r.montant)}</span>
-                      <Badge size="xs" color="gray">{r.annee}</Badge>
+                      <span className="text-gray-500 text-xs w-20 data-val">{new Date(r.date).toLocaleDateString('fr-FR')}</span>
+                      <span className="font-medium w-24 text-right data-val" style={{ color: '#1B6B40' }}>{formatEuros(r.montant)}</span>
+                      <span
+                        className="px-1.5 py-0.5 text-xs font-medium data-val"
+                        style={{ backgroundColor: '#F1F5F9', color: '#64748B', borderRadius: '4px' }}
+                      >
+                        {r.annee}
+                      </span>
                       <span className="text-gray-600 text-xs">{r.description}</span>
                     </div>
                     <div className="flex gap-1">
@@ -207,6 +220,6 @@ export function Regularisations({ regularisations, onUpdate }: RegularisationsPr
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
