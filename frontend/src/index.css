@@ -4,8 +4,35 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', sans-serif;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #f9fafb;
+  background-color: #F8FAFB;
+  color: #1A2332;
+}
+
+/* Registre données — tous les montants, pourcentages, dates */
+.data-val {
+  font-family: Consolas, 'Courier New', 'Lucida Console', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Séparateurs de groupes colonnes dans les tableaux */
+.col-sep {
+  border-left: 1px solid #E2E8F0;
+}
+.col-sep-amber {
+  border-left: 1px solid #FCD34D;
+}
+
+/* Ligne de tableau colorée par statut (tint de fond) */
+.row-retard { background-color: #FFF5F5; }
+.row-encours { background-color: #FFFBEB; }
+
+@media print {
+  aside,
+  header,
+  .no-print { display: none !important; }
+  main { overflow: visible !important; }
+  body { background: white; font-size: 11px; }
+  .data-val { font-family: 'Courier New', monospace; }
 }

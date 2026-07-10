@@ -1,50 +1,84 @@
-import { useEffect, useRef, useState } from 'react';
+import { CSSProperties, Fragment, useEffect, useRef, useState } from 'react';
 import { api, AnalyseRemise, GeneriquesData, OrpecAnnuelData } from '../services/api';
 import { formatEuros } from '../utils/formatters';
 
-const MOIS_COURTS = ['Jan.', 'Fev.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aout', 'Sept.', 'Oct.', 'Nov.', 'Dec.'];
+const MOIS_COURTS = ['Jan.', 'Fév.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
 
 function fmt(n: number | undefined): string {
   if (n === undefined || n === null) return '—';
   return formatEuros(n);
 }
 
-function fmtDelta(n: number | undefined): { text: string; cls: string } {
-  if (n === undefined || n === null) return { text: '—', cls: 'text-slate-400' };
+function fmtDelta(n: number | undefined): { text: string; color: string } {
+  if (n === undefined || n === null) return { text: '—', color: '#94A3B8' };
   return {
     text: formatEuros(n),
-    cls: n < -0.01 ? 'text-red-600 font-semibold' : n > 0.01 ? 'text-amber-600 font-semibold' : 'text-emerald-600'
+    color: n < -0.01 ? '#991B1B' : n > 0.01 ? '#B45309' : '#1B6B40',
   };
 }
 
 function CrossCheckBadge({ cc }: { cc: AnalyseRemise['crossCheck'] }) {
-  if (!cc) return <span className="text-slate-300">—</span>;
-  const ecartTxt = cc.ecart !== undefined ? ` (${cc.ecart >= 0 ? '+' : ''}${cc.ecart.toFixed(2)} €)` : '';
+  if (!cc) return <span style={{ color: '#CBD5E1' }}>—</span>;
+  const ecart = cc.ecart !== undefined ? ` (${cc.ecart >= 0 ? '+' : ''}${cc.ecart.toFixed(2)} €)` : '';
   switch (cc.statut) {
     case 'matched':
-      return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-emerald-100 text-emerald-700">✓{ecartTxt}</span>;
+      return (
+        <span className="data-val inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded"
+          style={{ backgroundColor: '#E8F5EE', color: '#1B6B40' }}>
+          ✓{ecart}
+        </span>
+      );
     case 'mismatch':
-      return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-100 text-red-700">✗{ecartTxt}</span>;
+      return (
+        <span className="data-val inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-100 text-red-800">
+          ✗{ecart}
+        </span>
+      );
     case 'no_announce':
-      return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-100 text-slate-500">—</span>;
+      return (
+        <span className="inline-flex px-1.5 py-0.5 text-[10px] rounded bg-slate-100 text-slate-400">
+          —
+        </span>
+      );
     case 'no_payment':
-      return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-700">⏳</span>;
+      return (
+        <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-700">
+          ⏳
+        </span>
+      );
     default:
-      return <span className="text-slate-300">—</span>;
+      return <span style={{ color: '#CBD5E1' }}>—</span>;
   }
 }
 
 function StatutBadge({ statut }: { statut: string }) {
-  if (statut === 'OK') return <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-emerald-100 text-emerald-700">OK</span>;
-  if (statut === 'EN_COURS') return <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-700">Incomplet</span>;
-  return <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-100 text-red-700">Retard</span>;
+  if (statut === 'OK') {
+    return (
+      <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded"
+        style={{ backgroundColor: '#E8F5EE', color: '#1B6B40' }}>
+        OK
+      </span>
+    );
+  }
+  if (statut === 'EN_COURS') {
+    return (
+      <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-700">
+        Incomplet
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-100 text-red-800">
+      Retard
+    </span>
+  );
 }
 
 const QUARTER_LABELS = ['T1', 'T2', 'T3', 'T4'];
 
 function getQuarter(moisKey: string): number {
   const m = parseInt(moisKey.split('-')[1]);
-  return Math.ceil(m / 3) - 1; // 0-indexed
+  return Math.ceil(m / 3) - 1;
 }
 
 interface QuarterAgg {
@@ -73,7 +107,6 @@ function aggregateQuarter(rows: AnalyseRemise[]): QuarterAgg {
   for (const r of rows) {
     sumA3 += r.theoriques?.allianceTTC ?? 0;
     sumC += r.remiseReelle;
-
     if (r.theoriques?.orpecAssiette !== undefined) {
       sumA1 = (sumA1 ?? 0) + r.theoriques.orpecAssiette;
       hasA1 = true;
@@ -159,6 +192,26 @@ function exportCSV(annee: number, mois: AnalyseRemise[], orpecAnnuel: OrpecAnnue
   URL.revokeObjectURL(url);
 }
 
+// ─── Styles partagés ────────────────────────────────────────────────────────
+
+const CARD: CSSProperties = {
+  backgroundColor: '#fff',
+  border: '1px solid #E2E8F0',
+  borderRadius: '4px',
+};
+
+const TH_BASE = 'text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap';
+
+// Couleurs de groupe colonnes
+const GRP_BASES   = { color: '#64748B' as const };
+const GRP_CONSTATE = { color: '#64748B' as const };
+const GRP_ECARTS  = { color: '#B45309' as const, backgroundColor: '#FFFBEB' as const };
+const GRP_CTRL    = { color: '#64748B' as const };
+const SEP_LEFT: React.CSSProperties = { borderLeft: '1px solid #E2E8F0' };
+const SEP_LEFT_AMBER: React.CSSProperties = { borderLeft: '1px solid #FDE68A' };
+
+// ─── Composant ─────────────────────────────────────────────────────────────
+
 export function DashboardConfrontation() {
   const [annee, setAnnee] = useState(new Date().getFullYear());
   const [years, setYears] = useState<number[]>([new Date().getFullYear()]);
@@ -183,7 +236,7 @@ export function DashboardConfrontation() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [annee, generiques]);  // re-fetch quand generiques change
+  }, [annee, generiques]);
 
   function handleImportGeneriques(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -211,11 +264,9 @@ export function DashboardConfrontation() {
     setGeneriques(null);
   }
 
-  // Group months by quarter
   const quarters: AnalyseRemise[][] = [[], [], [], []];
   for (const m of mois) quarters[getQuarter(m.mois)].push(m);
 
-  // Annual totals
   const annualA1 = mois.some(m => m.theoriques?.orpecAssiette !== undefined)
     ? mois.reduce((s, m) => s + (m.theoriques?.orpecAssiette ?? 0), 0)
     : undefined;
@@ -234,32 +285,46 @@ export function DashboardConfrontation() {
     ? mois.reduce((s, m) => s + (m.deltaPaiement ?? 0), 0)
     : undefined;
 
-  if (loading) return <div className="p-6 text-sm text-slate-500">Chargement...</div>;
+  if (loading) {
+    return <div className="p-6 text-sm" style={{ color: '#64748B' }}>Chargement…</div>;
+  }
 
   return (
-    <div className="p-6 space-y-5">
-      {/* Header + controls */}
-      <div className="flex items-center justify-between">
+    <div className="p-5 space-y-4">
+
+      {/* ─── En-tête + contrôles ─── */}
+      <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-base font-semibold text-slate-800">Triptyque A / B / C — {annee}</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h2 className="text-sm font-semibold" style={{ color: '#1A2332' }}>
+            Triptyque A / B / C — <span className="data-val">{annee}</span>
+          </h2>
+          <p className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>
             A1 = ORPEC (HT) · A2 = Giropharm{generiques ? ` (${generiques.entrees.length} entrées)` : ' (N/A)'} · A3 = Alliance TTC · B = Annoncé (HT) · C = Versé (TTC)
           </p>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="no-print flex items-center gap-2">
           <select
             value={annee}
             onChange={e => setAnnee(parseInt(e.target.value))}
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600"
+            className="text-xs px-2 py-1.5"
+            style={{ border: '1px solid #E2E8F0', borderRadius: '3px', backgroundColor: '#fff', color: '#64748B' }}
           >
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          {/* Import génériques */}
+
           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportGeneriques} />
+
           {generiques ? (
             <button
               onClick={handleDeleteGeneriques}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors"
+              style={{
+                border: '1px solid #C8E8D5',
+                borderRadius: '3px',
+                color: '#1B6B40',
+                backgroundColor: '#E8F5EE',
+              }}
               title={`Importé le ${new Date(generiques.dateImport).toLocaleDateString('fr-FR')}`}
             >
               ✓ Génériques
@@ -268,15 +333,28 @@ export function DashboardConfrontation() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={generiquesLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
+              style={{
+                border: '1px solid #FDE68A',
+                borderRadius: '3px',
+                color: '#B45309',
+                backgroundColor: '#FFFBEB',
+              }}
             >
               {generiquesLoading ? '…' : '⊕ Importer génériques'}
             </button>
           )}
+
           {mois.length > 0 && (
             <button
               onClick={() => exportCSV(annee, mois, orpecAnnuel)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors"
+              style={{
+                border: '1px solid #E2E8F0',
+                borderRadius: '3px',
+                color: '#64748B',
+                backgroundColor: '#fff',
+              }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -287,148 +365,229 @@ export function DashboardConfrontation() {
         </div>
       </div>
 
-      {/* Main table */}
-      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+      {/* ─── Tableau principal ─── */}
+      <div style={{ ...CARD, overflow: 'hidden' }}>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+          <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+
+            {/* En-tête groupé sur 2 lignes */}
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Mois</th>
-                <th className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">A1 ORPEC (HT)</th>
-                <th className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">A2 Giropharm</th>
-                <th className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">A3 Alliance (TTC)</th>
-                <th className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">B Annoncé (HT)</th>
-                <th className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">C Versé (TTC)</th>
-                <th className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">A1 − B</th>
-                <th className="text-right px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">B − C</th>
-                <th className="px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">CrossCheck</th>
-                <th className="px-3 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
+              {/* Ligne 1 : groupes */}
+              <tr style={{ backgroundColor: '#F8FAFB' }}>
+                <th
+                  rowSpan={2}
+                  className={`${TH_BASE} text-left px-4 py-2 align-bottom`}
+                  style={{ ...GRP_BASES, borderBottom: '2px solid #E2E8F0' }}
+                >
+                  Mois
+                </th>
+                <th
+                  colSpan={3}
+                  className="text-center py-1.5 px-2 text-[9px] font-bold uppercase tracking-widest"
+                  style={{ ...GRP_BASES, ...SEP_LEFT, borderBottom: '1px solid #E2E8F0' }}
+                >
+                  Bases de calcul
+                </th>
+                <th
+                  colSpan={2}
+                  className="text-center py-1.5 px-2 text-[9px] font-bold uppercase tracking-widest"
+                  style={{ ...GRP_CONSTATE, ...SEP_LEFT, borderBottom: '1px solid #E2E8F0' }}
+                >
+                  Constaté
+                </th>
+                <th
+                  colSpan={2}
+                  className="text-center py-1.5 px-2 text-[9px] font-bold uppercase tracking-widest"
+                  style={{ ...GRP_ECARTS, ...SEP_LEFT_AMBER, borderBottom: '1px solid #FDE68A' }}
+                >
+                  Écarts
+                </th>
+                <th
+                  colSpan={2}
+                  className="text-center py-1.5 px-2 text-[9px] font-bold uppercase tracking-widest"
+                  style={{ ...GRP_CTRL, ...SEP_LEFT, borderBottom: '1px solid #E2E8F0' }}
+                >
+                  Contrôle
+                </th>
+              </tr>
+
+              {/* Ligne 2 : colonnes individuelles */}
+              <tr style={{ backgroundColor: '#F8FAFB', borderBottom: '2px solid #E2E8F0' }}>
+                {/* A1, A2, A3 */}
+                <th className={`${TH_BASE} text-right px-3 py-2`} style={{ ...GRP_BASES, ...SEP_LEFT }}>A1 ORPEC HT</th>
+                <th className={`${TH_BASE} text-right px-3 py-2`} style={GRP_BASES}>A2 Giropharm</th>
+                <th className={`${TH_BASE} text-right px-3 py-2`} style={GRP_BASES}>A3 Alliance TTC</th>
+                {/* B, C */}
+                <th className={`${TH_BASE} text-right px-3 py-2`} style={{ ...GRP_CONSTATE, ...SEP_LEFT }}>B Annoncé HT</th>
+                <th className={`${TH_BASE} text-right px-3 py-2`} style={GRP_CONSTATE}>C Versé TTC</th>
+                {/* A1-B, B-C */}
+                <th className={`${TH_BASE} text-right px-3 py-2`} style={{ ...GRP_ECARTS, ...SEP_LEFT_AMBER }}>A1 − B</th>
+                <th className={`${TH_BASE} text-right px-3 py-2`} style={GRP_ECARTS}>B − C</th>
+                {/* CC, Statut */}
+                <th className={`${TH_BASE} px-3 py-2`} style={{ ...GRP_CTRL, ...SEP_LEFT }}>CC</th>
+                <th className={`${TH_BASE} px-3 py-2`} style={GRP_CTRL}>Statut</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+
+            <tbody>
               {mois.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="text-center py-10 text-slate-400">
+                  <td colSpan={10} className="text-center py-10 text-sm" style={{ color: '#94A3B8' }}>
                     Aucune donnée pour {annee}
                   </td>
                 </tr>
               )}
+
               {quarters.map((qRows, qi) => {
                 if (qRows.length === 0) return null;
                 const agg = aggregateQuarter(qRows);
                 const alert = hasQuarterAlert(agg);
-                const deltaC = fmtDelta(agg.sumDeltaCalcul);
-                const deltaP = fmtDelta(agg.sumDeltaPaiement);
+                const dc = fmtDelta(agg.sumDeltaCalcul);
+                const dp = fmtDelta(agg.sumDeltaPaiement);
+
                 return (
-                  <>
-                    {qRows.map(r => {
+                  <Fragment key={qi}>
+                    {/* Lignes mensuelles */}
+                    {qRows.map((r, rowIdx) => {
                       const [y, m] = r.mois.split('-');
                       const moisLabel = `${MOIS_COURTS[parseInt(m) - 1]} ${y}`;
-                      const dc = fmtDelta(r.deltaCalcul);
-                      const dp = fmtDelta(r.deltaPaiement);
+                      const rdeltaC = fmtDelta(r.deltaCalcul);
+                      const rdeltaP = fmtDelta(r.deltaPaiement);
+                      const rowBg = r.statut === 'RETARD'
+                        ? '#FFF5F5'
+                        : r.statut === 'EN_COURS'
+                        ? '#FFFBEB'
+                        : '#fff';
+
                       return (
-                        <tr key={r.mois} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-2 text-slate-800 font-medium whitespace-nowrap">{moisLabel}</td>
-                          <td className="px-3 py-2 text-right text-slate-600">{fmt(r.theoriques?.orpecAssiette)}</td>
-                          <td className="px-3 py-2 text-right text-slate-600">{fmt(r.theoriques?.girophamProxy)}</td>
-                          <td className="px-3 py-2 text-right text-slate-600">{fmt(r.theoriques?.allianceTTC)}</td>
-                          <td className="px-3 py-2 text-right text-slate-600">{fmt(r.remiseAnnoncee)}</td>
-                          <td className="px-3 py-2 text-right text-slate-600">{formatEuros(r.remiseReelle)}</td>
-                          <td className={`px-3 py-2 text-right ${dc.cls}`}>{dc.text}</td>
-                          <td className={`px-3 py-2 text-right ${dp.cls}`}>{dp.text}</td>
-                          <td className="px-3 py-2"><CrossCheckBadge cc={r.crossCheck} /></td>
+                        <tr
+                          key={r.mois}
+                          style={{
+                            backgroundColor: rowBg,
+                            borderBottom: rowIdx < qRows.length - 1
+                              ? '1px solid #F1F5F9'
+                              : 'none',
+                          }}
+                        >
+                          <td className="px-4 py-2 font-medium whitespace-nowrap" style={{ color: '#1A2332' }}>
+                            {moisLabel}
+                          </td>
+                          <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B', ...SEP_LEFT }}>{fmt(r.theoriques?.orpecAssiette)}</td>
+                          <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B' }}>{fmt(r.theoriques?.girophamProxy)}</td>
+                          <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B' }}>{fmt(r.theoriques?.allianceTTC)}</td>
+                          <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B', ...SEP_LEFT }}>{fmt(r.remiseAnnoncee)}</td>
+                          <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B' }}>{formatEuros(r.remiseReelle)}</td>
+                          <td className="data-val px-3 py-2 text-right font-semibold" style={{ color: rdeltaC.color, ...SEP_LEFT_AMBER }}>{rdeltaC.text}</td>
+                          <td className="data-val px-3 py-2 text-right font-semibold" style={{ color: rdeltaP.color }}>{rdeltaP.text}</td>
+                          <td className="px-3 py-2" style={SEP_LEFT}><CrossCheckBadge cc={r.crossCheck} /></td>
                           <td className="px-3 py-2"><StatutBadge statut={r.statut} /></td>
                         </tr>
                       );
                     })}
-                    {/* Quarter subtotal */}
-                    <tr className={`border-t border-slate-200 ${alert ? 'bg-amber-50' : 'bg-slate-50'}`}>
-                      <td className="px-4 py-2 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+
+                    {/* Sous-total trimestriel */}
+                    <tr style={{
+                      backgroundColor: alert ? '#FFFBEB' : '#F8FAFB',
+                      borderTop: '1px solid #E2E8F0',
+                      borderBottom: '2px solid #E2E8F0',
+                    }}>
+                      <td className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>
                         {QUARTER_LABELS[qi]}
                         {alert && (
-                          <span className="ml-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-200 text-amber-800 text-[9px] font-bold">
+                          <span className="ml-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold"
+                            style={{ backgroundColor: '#FDE68A', color: '#92400E' }}>
                             ⚠ Écart &gt;3%
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{fmt(agg.sumA1)}</td>
-                      <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{fmt(agg.sumA2)}</td>
-                      <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{formatEuros(agg.sumA3)}</td>
-                      <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{fmt(agg.sumB)}</td>
-                      <td className="px-3 py-2 text-right text-[10px] font-semibold text-slate-700">{formatEuros(agg.sumC)}</td>
-                      <td className={`px-3 py-2 text-right text-[10px] ${deltaC.cls}`}>{deltaC.text}</td>
-                      <td className={`px-3 py-2 text-right text-[10px] ${deltaP.cls}`}>{deltaP.text}</td>
-                      <td className="px-3 py-2" />
+                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332', ...SEP_LEFT }}>{fmt(agg.sumA1)}</td>
+                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332' }}>{fmt(agg.sumA2)}</td>
+                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332' }}>{formatEuros(agg.sumA3)}</td>
+                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332', ...SEP_LEFT }}>{fmt(agg.sumB)}</td>
+                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332' }}>{formatEuros(agg.sumC)}</td>
+                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: dc.color, ...SEP_LEFT_AMBER }}>{dc.text}</td>
+                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: dp.color }}>{dp.text}</td>
+                      <td className="px-3 py-2" style={SEP_LEFT} />
                       <td className="px-3 py-2" />
                     </tr>
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>
-            {mois.length > 0 && (
-              <tfoot>
-                <tr className="border-t-2 border-slate-300 bg-slate-100">
-                  <td className="px-4 py-3 text-[10px] font-bold text-slate-700 uppercase tracking-wider">Total {annee}</td>
-                  <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{fmt(annualA1)}</td>
-                  <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{fmt(annualA2)}</td>
-                  <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{formatEuros(annualA3)}</td>
-                  <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{fmt(annualB)}</td>
-                  <td className="px-3 py-3 text-right text-[11px] font-bold text-slate-800">{formatEuros(annualC)}</td>
-                  <td className={`px-3 py-3 text-right text-[11px] ${fmtDelta(annualDeltaCalcul).cls}`}>{fmtDelta(annualDeltaCalcul).text}</td>
-                  <td className={`px-3 py-3 text-right text-[11px] ${fmtDelta(annualDeltaPaiement).cls}`}>{fmtDelta(annualDeltaPaiement).text}</td>
-                  <td className="px-3 py-3" />
-                  <td className="px-3 py-3" />
-                </tr>
-              </tfoot>
-            )}
+
+            {/* Total annuel */}
+            {mois.length > 0 && (() => {
+              const adC = fmtDelta(annualDeltaCalcul);
+              const adP = fmtDelta(annualDeltaPaiement);
+              return (
+                <tfoot>
+                  <tr style={{ backgroundColor: '#F1F5F9', borderTop: '2px solid #CBD5E1' }}>
+                    <td className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider" style={{ color: '#1A2332' }}>
+                      Total {annee}
+                    </td>
+                    <td className="data-val px-3 py-3 text-right text-[11px] font-bold" style={{ color: '#1A2332', ...SEP_LEFT }}>{fmt(annualA1)}</td>
+                    <td className="data-val px-3 py-3 text-right text-[11px] font-bold" style={{ color: '#1A2332' }}>{fmt(annualA2)}</td>
+                    <td className="data-val px-3 py-3 text-right text-[11px] font-bold" style={{ color: '#1A2332' }}>{formatEuros(annualA3)}</td>
+                    <td className="data-val px-3 py-3 text-right text-[11px] font-bold" style={{ color: '#1A2332', ...SEP_LEFT }}>{fmt(annualB)}</td>
+                    <td className="data-val px-3 py-3 text-right text-[11px] font-bold" style={{ color: '#1A2332' }}>{formatEuros(annualC)}</td>
+                    <td className="data-val px-3 py-3 text-right text-[11px] font-bold" style={{ color: adC.color, ...SEP_LEFT_AMBER }}>{adC.text}</td>
+                    <td className="data-val px-3 py-3 text-right text-[11px] font-bold" style={{ color: adP.color }}>{adP.text}</td>
+                    <td className="px-3 py-3" style={SEP_LEFT} />
+                    <td className="px-3 py-3" />
+                  </tr>
+                </tfoot>
+              );
+            })()}
           </table>
         </div>
       </div>
 
-      {/* Référence annuelle ORPEC (bloc séparé, non mensualisée) */}
+      {/* ─── Référence annuelle ORPEC ─── */}
       {orpecAnnuel && (
-        <div className="bg-white rounded-xl border border-purple-100 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">
-            Référence annuelle ORPEC — {annee}
-            <span className="ml-2 text-[10px] font-normal text-slate-400">(non mensualisée — source : {orpecAnnuel.source})</span>
+        <div style={{ ...CARD, borderLeft: '3px solid #1B6B40', padding: '1.25rem' }}>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: '#1A2332' }}>
+            Référence annuelle ORPEC — <span className="data-val">{annee}</span>
+            <span className="ml-2 text-[10px] font-normal" style={{ color: '#94A3B8' }}>
+              (non mensualisée — source : {orpecAnnuel.source})
+            </span>
           </h3>
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Assiette</p>
-              <p className="text-lg font-bold text-slate-800">{formatEuros(orpecAnnuel.assiette)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Due (3%)</p>
-              <p className="text-lg font-bold text-slate-800">{formatEuros(orpecAnnuel.remiseDue)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Versée</p>
-              <p className="text-lg font-bold text-slate-800">{formatEuros(orpecAnnuel.remiseVersee)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Delta</p>
-              <p className={`text-lg font-bold ${orpecAnnuel.delta < -0.01 ? 'text-red-600' : 'text-emerald-600'}`}>
-                {formatEuros(orpecAnnuel.delta)}
-              </p>
-            </div>
+          <div className="grid grid-cols-4 gap-6">
+            {[
+              { label: 'Assiette', value: formatEuros(orpecAnnuel.assiette), color: '#1A2332' },
+              { label: 'Due (3 %)', value: formatEuros(orpecAnnuel.remiseDue), color: '#1A2332' },
+              { label: 'Versée', value: formatEuros(orpecAnnuel.remiseVersee), color: '#1A2332' },
+              {
+                label: 'Delta',
+                value: formatEuros(orpecAnnuel.delta),
+                color: orpecAnnuel.delta < -0.01 ? '#991B1B' : '#1B6B40',
+              },
+            ].map(({ label, value, color }) => (
+              <div key={label}>
+                <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: '#94A3B8' }}>{label}</p>
+                <p className="data-val text-lg font-bold" style={{ color }}>{value}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Légende */}
-      <div className="bg-slate-50 rounded-xl border border-slate-100 px-5 py-3">
-        <p className="text-[10px] text-slate-500 font-semibold mb-1.5">Légende</p>
-        <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px] text-slate-500">
-          <span><strong>A1</strong> = 3% × assiette ORPEC Sans RSF (HT, saisie PIEVE)</span>
-          <span><strong>A2</strong> = proxy Giropharm : 3% × (debitHT − CA génériques ≥350€/labo − Alvita)</span>
-          <span><strong>A3</strong> = 3% × assiette Alliance TTC (estimation)</span>
-          <span><strong>B</strong> = remise annoncée sur facture ORPEC / tableau PIEVE (HT)</span>
-          <span><strong>C</strong> = remise D3 mois M+1 (TTC — décalage M−1 confirmé)</span>
-          <span><strong>A1−B</strong> = écart de calcul (positif = ORPEC annonce moins que le dû)</span>
-          <span><strong>B−C</strong> = écart de paiement (positif = versé moins qu'annoncé)</span>
-          <span>⚠ Alerte trimestrielle si |Σ B−C| &gt; 3% de Σ A1 du trimestre</span>
+      {/* ─── Légende ─── */}
+      <div style={{ backgroundColor: '#F8FAFB', border: '1px solid #E2E8F0', borderRadius: '4px', padding: '0.75rem 1.25rem' }}>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#64748B' }}>
+          Légende
+        </p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-[10px]" style={{ color: '#64748B' }}>
+          <span><strong style={{ color: '#1A2332' }}>A1</strong> = 3% × assiette ORPEC Sans RSF (HT, saisie PIEVE)</span>
+          <span><strong style={{ color: '#1A2332' }}>A2</strong> = proxy Giropharm : 3% × (debitHT − CA génériques ≥350€/labo − Alvita)</span>
+          <span><strong style={{ color: '#1A2332' }}>A3</strong> = 3% × assiette Alliance TTC (estimation)</span>
+          <span><strong style={{ color: '#1A2332' }}>B</strong> = remise annoncée sur facture ORPEC / tableau PIEVE (HT)</span>
+          <span><strong style={{ color: '#1A2332' }}>C</strong> = remise D3 mois M+1 (TTC — décalage M−1 confirmé)</span>
+          <span><strong style={{ color: '#B45309' }}>A1−B</strong> = écart de calcul (positif = ORPEC annonce moins que le dû)</span>
+          <span><strong style={{ color: '#B45309' }}>B−C</strong> = écart de paiement (⚠ inclut érosion TVA ~6%, ≠ impayé)</span>
+          <span>Alerte trimestrielle si |Σ B−C| &gt; 3% de Σ A1 du trimestre</span>
         </div>
       </div>
+
     </div>
   );
 }
