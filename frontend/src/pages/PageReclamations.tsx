@@ -24,8 +24,8 @@ function computeStatus(claim: Reclamation, received: number): ClaimStatus {
 }
 
 function StatusBadge({ status }: { status: ClaimStatus }) {
-  if (status === 'cloturee') return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-700">Cloturée</span>;
-  if (status === 'prete_a_clore') return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-100 text-blue-700">Prête à clore</span>;
+  if (status === 'cloturee') return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-100 text-red-800">Cloturée</span>;
+  if (status === 'prete_a_clore') return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full" style={{ backgroundColor: '#E8F5EE', color: '#1B6B40' }}>Prête à clore</span>;
   return <span className="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700">Ouverte</span>;
 }
 
@@ -42,7 +42,6 @@ export function PageReclamations() {
   const [loading, setLoading] = useState(true);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
 
-  // Formulaire réclamation
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [editClaimId, setEditClaimId] = useState<string | null>(null);
   const [claimForm, setClaimForm] = useState({
@@ -51,16 +50,13 @@ export function PageReclamations() {
   });
   const [autoAmount, setAutoAmount] = useState<number | null>(null);
 
-  // Prompt reliquat (après soumission si montant < calculé)
   const [pendingReliquat, setPendingReliquat] = useState<{
     claimId: string; moisDebut: string; moisFin: string; amount: number
   } | null>(null);
 
-  // Formulaire "créer réclamation depuis reliquat"
   const [showClaimFromReliquat, setShowClaimFromReliquat] = useState(false);
   const [claimFromReliquatAmount, setClaimFromReliquatAmount] = useState('');
 
-  // Formulaire paiement
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null);
   const [paymentForm, setPaymentForm] = useState({ date: TODAY, amount: '', comment: '' });
@@ -119,7 +115,6 @@ export function PageReclamations() {
   const selectedReliquat = reliquats.find(r => r.id === selectedReliquatId) ?? null;
   const selectedPayments = selectedClaimId ? getClaimPayments(selectedClaimId) : [];
 
-  // Liste combinée claims + reliquats filtrée
   type ListItem = { kind: 'claim'; data: Reclamation } | { kind: 'reliquat'; data: Reliquat };
   const listItems: ListItem[] = [];
   if (filter !== 'reliquat') {
@@ -140,7 +135,6 @@ export function PageReclamations() {
     return dateB.localeCompare(dateA);
   });
 
-  // Auto-calcul montant depuis les mois sélectionnés
   useEffect(() => {
     if (!claimForm.moisDebut || !claimForm.moisFin || claimForm.moisDebut > claimForm.moisFin) {
       setAutoAmount(null);
@@ -156,7 +150,6 @@ export function PageReclamations() {
     }
   }, [claimForm.moisDebut, claimForm.moisFin]);
 
-  // --- Claim CRUD ---
   function openNewClaim() {
     setEditClaimId(null);
     setClaimForm({ moisDebut: '', moisFin: '', dateCreation: TODAY, montantReclame: '', description: '' });
@@ -189,7 +182,6 @@ export function PageReclamations() {
         setShowClaimForm(false);
         selectClaim(created.id);
         await loadAll();
-        // Propose reliquat si montant < déficit calculé
         if (autoAmount !== null && amount < autoAmount - 0.01) {
           setPendingReliquat({
             claimId: created.id,
@@ -244,7 +236,6 @@ export function PageReclamations() {
     } catch (err) { console.error(err); }
   }
 
-  // --- Reliquat actions ---
   async function abandonReliquat(id: string) {
     if (!confirm('Marquer ce reliquat comme abandonné ?')) return;
     try {
@@ -267,7 +258,6 @@ export function PageReclamations() {
     if (!selectedReliquat) return;
     try {
       const amount = parseFloat(claimFromReliquatAmount);
-      // Créer la réclamation liée au reliquat
       const created = await api.addReclamation({
         moisDebut: selectedReliquat.periodStart,
         moisFin: selectedReliquat.periodEnd,
@@ -280,7 +270,6 @@ export function PageReclamations() {
         })(),
         sourceReliquatId: selectedReliquat.id
       });
-      // Réduire le remainingAmount du reliquat (ne pas le clore, sauf si épuisé)
       const newRemaining = Math.round((selectedReliquat.remainingAmount - amount) * 100) / 100;
       await api.updateReliquat(selectedReliquat.id, {
         remainingAmount: Math.max(0, newRemaining),
@@ -292,7 +281,6 @@ export function PageReclamations() {
     } catch (err) { console.error(err); }
   }
 
-  // --- Payment CRUD ---
   function openNewPayment() {
     setEditPaymentId(null);
     setPaymentForm({ date: TODAY, amount: '', comment: '' });
@@ -349,23 +337,23 @@ export function PageReclamations() {
         />
       )}
 
-      {/* Prompt reliquat */}
       {pendingReliquat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+          <div className="bg-white shadow-xl p-6 w-full max-w-sm mx-4" style={{ borderRadius: '4px' }}>
             <h2 className="text-sm font-bold text-slate-800 mb-2">Différence non réclamée</h2>
             <p className="text-xs text-slate-500 mb-4">
               Le montant réclamé est inférieur au déficit calculé.<br />
-              Différence : <span className="font-semibold text-amber-700">{formatEuros(pendingReliquat.amount)}</span>
+              Différence : <span className="font-semibold text-amber-700 data-val">{formatEuros(pendingReliquat.amount)}</span>
             </p>
             <p className="text-xs text-slate-600 mb-4">Que faire de cette différence ?</p>
             <div className="flex gap-2">
               <button onClick={() => confirmReliquat(true)}
-                className="flex-1 py-2 text-xs font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600">
+                className="flex-1 py-2 text-xs font-semibold text-white rounded hover:opacity-90"
+                style={{ backgroundColor: '#F59E0B' }}>
                 Créer un reliquat
               </button>
               <button onClick={() => confirmReliquat(false)}
-                className="flex-1 py-2 text-xs font-semibold border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50">
+                className="flex-1 py-2 text-xs font-semibold border border-slate-200 text-slate-600 rounded hover:bg-slate-50">
                 Abandonner
               </button>
             </div>
@@ -377,33 +365,34 @@ export function PageReclamations() {
       <div className="w-80 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col">
         <div className="p-4 border-b border-slate-100 space-y-3">
           <button onClick={openNewClaim}
-            className="w-full py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+            className="w-full py-2 text-white text-sm font-semibold rounded transition-colors"
+            style={{ backgroundColor: '#1B6B40' }}>
             + Nouvelle réclamation
           </button>
           {claims.length > 0 && (
             <button onClick={() => setShowConfirmClear(true)}
-              className="w-full py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+              className="w-full py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors">
               Tout supprimer
             </button>
           )}
           <div className="flex gap-1 flex-wrap">
             {FILTERS.map(f => (
               <button key={f.id} onClick={() => setFilter(f.id)}
-                className={`px-2 py-1 text-[10px] font-semibold rounded-md transition-colors ${
+                className={`px-2 py-1 text-[10px] font-semibold rounded transition-colors ${
                   filter === f.id
-                    ? f.id === 'reliquat' ? 'bg-amber-400 text-white' : 'bg-blue-600 text-white'
+                    ? f.id === 'reliquat' ? 'bg-amber-400 text-white' : 'text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}>
+                }`}
+                style={filter === f.id && f.id !== 'reliquat' ? { backgroundColor: '#1B6B40' } : undefined}>
                 {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Formulaire réclamation */}
         {showClaimForm && (
-          <div className="p-4 border-b border-slate-200 bg-blue-50">
-            <p className="text-xs font-semibold text-blue-800 mb-3">{editClaimId ? 'Modifier' : 'Nouvelle réclamation'}</p>
+          <div className="p-4 border-b border-slate-200" style={{ backgroundColor: '#E8F5EE' }}>
+            <p className="text-xs font-semibold mb-3" style={{ color: '#1B6B40' }}>{editClaimId ? 'Modifier' : 'Nouvelle réclamation'}</p>
             <form onSubmit={submitClaim} className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -426,7 +415,7 @@ export function PageReclamations() {
               <div>
                 <label className="text-[10px] text-slate-500">
                   Montant réclamé
-                  {autoAmount !== null && <span className="text-blue-600 ml-1">(calculé: {formatEuros(autoAmount)})</span>}
+                  {autoAmount !== null && <span className="ml-1 data-val" style={{ color: '#1B6B40' }}>(calculé: {formatEuros(autoAmount)})</span>}
                 </label>
                 <input type="number" step="0.01" value={claimForm.montantReclame} onChange={e => setClaimForm(f => ({ ...f, montantReclame: e.target.value }))}
                   className="w-full text-xs border border-slate-200 rounded px-2 py-1" required />
@@ -442,7 +431,7 @@ export function PageReclamations() {
                   className="w-full text-xs border border-slate-200 rounded px-2 py-1" placeholder="Optionnel" />
               </div>
               <div className="flex gap-2 pt-1">
-                <button type="submit" className="flex-1 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700">
+                <button type="submit" className="flex-1 py-1.5 text-white text-xs font-semibold rounded" style={{ backgroundColor: '#1B6B40' }}>
                   {editClaimId ? 'Modifier' : 'Créer'}
                 </button>
                 <button type="button" onClick={() => { setShowClaimForm(false); setEditClaimId(null); }}
@@ -454,7 +443,6 @@ export function PageReclamations() {
           </div>
         )}
 
-        {/* Liste mixte */}
         <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
           {listItems.length === 0 && (
             <p className="text-center text-slate-400 text-sm py-8">Aucun élément</p>
@@ -468,7 +456,8 @@ export function PageReclamations() {
               const isSelected = c.id === selectedClaimId;
               return (
                 <button key={`claim-${c.id}`} onClick={() => selectClaim(c.id)}
-                  className={`w-full text-left p-4 hover:bg-slate-50 transition-colors ${isSelected ? 'bg-blue-50 border-l-2 border-blue-600' : ''}`}>
+                  className={`w-full text-left p-4 hover:bg-slate-50 transition-colors ${isSelected ? 'border-l-2' : ''}`}
+                  style={isSelected ? { borderLeftColor: '#1B6B40', backgroundColor: '#E8F5EE' } : undefined}>
                   <div className="flex items-start justify-between mb-1">
                     <span className="text-xs font-semibold text-slate-700">{c.reference}</span>
                     <StatusBadge status={status} />
@@ -482,9 +471,9 @@ export function PageReclamations() {
                     ) : null;
                   })()}
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Réclamé: <span className="font-medium text-slate-700">{formatEuros(c.montantReclame)}</span></span>
-                    <span className={remaining > 0.01 ? 'text-red-600 font-semibold' : 'text-emerald-600 font-semibold'}>
-                      {remaining > 0.01 ? `-${formatEuros(remaining)}` : 'Soldé'}
+                    <span className="text-slate-500">Réclamé: <span className="font-medium text-slate-700 data-val">{formatEuros(c.montantReclame)}</span></span>
+                    <span className={`${remaining > 0.01 ? 'text-red-600' : 'text-emerald-600'} font-semibold`}>
+                      {remaining > 0.01 ? <span className="data-val">-{formatEuros(remaining)}</span> : 'Soldé'}
                     </span>
                   </div>
                 </button>
@@ -510,8 +499,8 @@ export function PageReclamations() {
                   </div>
                   <p className="text-[10px] text-amber-700 mb-2">{formatMoisLabel(r.periodStart)} → {formatMoisLabel(r.periodEnd)}</p>
                   <div className="flex justify-between text-xs">
-                    <span className="text-amber-700">Initial: <span className="font-medium">{formatEuros(r.initialAmount)}</span></span>
-                    <span className="text-amber-800 font-semibold">Reste: {formatEuros(r.remainingAmount)}</span>
+                    <span className="text-amber-700">Initial: <span className="font-medium data-val">{formatEuros(r.initialAmount)}</span></span>
+                    <span className="text-amber-800 font-semibold data-val">Reste: {formatEuros(r.remainingAmount)}</span>
                   </div>
                 </button>
               );
@@ -523,7 +512,6 @@ export function PageReclamations() {
       {/* Colonne droite — détail */}
       <div className="flex-1 overflow-y-auto bg-gray-50">
 
-        {/* Détail réclamation */}
         {selectedClaim && (() => {
           const received = getReceived(selectedClaim.id);
           const remaining = selectedClaim.montantReclame - received;
@@ -531,7 +519,7 @@ export function PageReclamations() {
           const pct = selectedClaim.montantReclame > 0 ? Math.min(100, Math.round((received / selectedClaim.montantReclame) * 100)) : 0;
           return (
             <div className="p-6 space-y-5 max-w-3xl">
-              <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+              <div className="bg-white border border-slate-200 p-5" style={{ borderRadius: '4px' }}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -541,50 +529,50 @@ export function PageReclamations() {
                     <p className="text-xs text-slate-500">
                       {formatMoisLabel(selectedClaim.moisDebut)} → {formatMoisLabel(selectedClaim.moisFin)}
                       <span className="mx-1">·</span>
-                      {new Date(selectedClaim.dateCreation).toLocaleDateString('fr-FR')}
+                      <span className="data-val">{new Date(selectedClaim.dateCreation).toLocaleDateString('fr-FR')}</span>
                     </p>
                     {selectedClaim.description && <p className="text-xs text-slate-400 mt-1 italic">{selectedClaim.description}</p>}
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => openEditClaim(selectedClaim)} className="px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg hover:bg-slate-50">Modifier</button>
+                    <button onClick={() => openEditClaim(selectedClaim)} className="px-3 py-1.5 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50">Modifier</button>
                     {status !== 'cloturee' && (
-                      <button onClick={() => closeClaim(selectedClaim.id)} className="px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Clôturer</button>
+                      <button onClick={() => closeClaim(selectedClaim.id)} className="px-3 py-1.5 text-xs font-medium text-white rounded" style={{ backgroundColor: '#1B6B40' }}>Clôturer</button>
                     )}
-                    <button onClick={() => deleteClaim(selectedClaim.id)} className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50">Supprimer</button>
+                    <button onClick={() => deleteClaim(selectedClaim.id)} className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded hover:bg-red-50">Supprimer</button>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-[10px] text-slate-400 uppercase mb-1">Réclamé</p>
-                    <p className="text-lg font-bold text-slate-800">{formatEuros(selectedClaim.montantReclame)}</p>
+                  <div className="bg-slate-50 p-3" style={{ borderRadius: '4px' }}>
+                    <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: '#94A3B8' }}>Réclamé</p>
+                    <p className="text-lg font-bold text-slate-800 data-val">{formatEuros(selectedClaim.montantReclame)}</p>
                   </div>
-                  <div className="bg-emerald-50 rounded-lg p-3">
-                    <p className="text-[10px] text-slate-400 uppercase mb-1">Reçu</p>
-                    <p className="text-lg font-bold text-emerald-700">{formatEuros(received)}</p>
+                  <div className="p-3" style={{ backgroundColor: '#E8F5EE', borderRadius: '4px' }}>
+                    <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: '#94A3B8' }}>Reçu</p>
+                    <p className="text-lg font-bold data-val" style={{ color: '#1B6B40' }}>{formatEuros(received)}</p>
                   </div>
-                  <div className={`rounded-lg p-3 ${remaining > 0.01 ? 'bg-red-50' : 'bg-emerald-50'}`}>
-                    <p className="text-[10px] text-slate-400 uppercase mb-1">Reste</p>
-                    <p className={`text-lg font-bold ${remaining > 0.01 ? 'text-red-700' : 'text-emerald-700'}`}>{formatEuros(remaining)}</p>
+                  <div className="p-3" style={{ backgroundColor: remaining > 0.01 ? '#FFF5F5' : '#E8F5EE', borderRadius: '4px' }}>
+                    <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: '#94A3B8' }}>Reste</p>
+                    <p className="text-lg font-bold data-val" style={{ color: remaining > 0.01 ? '#991B1B' : '#1B6B40' }}>{formatEuros(remaining)}</p>
                   </div>
                 </div>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: '#1B6B40' }} />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">{pct}% recouvré</p>
+                <p className="text-[10px] mt-1 data-val" style={{ color: '#94A3B8' }}>{pct}% recouvré</p>
               </div>
 
-              {/* Paiements */}
-              <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="bg-white border border-slate-200 overflow-hidden" style={{ borderRadius: '4px' }}>
                 <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-700">Paiements reçus</h3>
                   {status !== 'cloturee' && (
-                    <button onClick={openNewPayment} className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">
+                    <button onClick={openNewPayment} className="px-3 py-1.5 text-xs font-semibold border rounded"
+                      style={{ color: '#1B6B40', backgroundColor: '#E8F5EE', borderColor: '#C8E8D5' }}>
                       + Ajouter
                     </button>
                   )}
                 </div>
                 {showPaymentForm && (
-                  <div className="px-5 py-4 bg-blue-50 border-b border-blue-100">
+                  <div className="px-5 py-4 border-b" style={{ backgroundColor: '#E8F5EE', borderBottomColor: '#C8E8D5' }}>
                     <form onSubmit={submitPayment} className="flex items-end gap-3 flex-wrap">
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-1">Date</label>
@@ -601,7 +589,7 @@ export function PageReclamations() {
                         <input type="text" value={paymentForm.comment} onChange={e => setPaymentForm(f => ({ ...f, comment: e.target.value }))}
                           className="text-xs border border-slate-200 rounded px-2 py-1.5 w-full" placeholder="Optionnel" />
                       </div>
-                      <button type="submit" className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700">
+                      <button type="submit" className="px-3 py-1.5 text-white text-xs font-semibold rounded" style={{ backgroundColor: '#1B6B40' }}>
                         {editPaymentId ? 'Modifier' : 'Enregistrer'}
                       </button>
                       <button type="button" onClick={() => { setShowPaymentForm(false); setEditPaymentId(null); }}
@@ -626,8 +614,8 @@ export function PageReclamations() {
                     )}
                     {selectedPayments.map(p => (
                       <tr key={p.id} className="hover:bg-slate-50">
-                        <td className="px-5 py-3 text-slate-700">{new Date(p.date).toLocaleDateString('fr-FR')}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-emerald-700">{formatEuros(p.amount)}</td>
+                        <td className="px-5 py-3 text-slate-700 data-val">{new Date(p.date).toLocaleDateString('fr-FR')}</td>
+                        <td className="px-4 py-3 text-right font-semibold data-val" style={{ color: '#1B6B40' }}>{formatEuros(p.amount)}</td>
                         <td className="px-4 py-3 text-slate-500 text-xs">{p.comment || '—'}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2 justify-end">
@@ -644,12 +632,11 @@ export function PageReclamations() {
           );
         })()}
 
-        {/* Détail reliquat */}
         {selectedReliquat && (() => {
           const originClaim = claims.find(c => c.id === selectedReliquat.originReclamationId);
           return (
             <div className="p-6 space-y-5 max-w-3xl">
-              <div className="rounded-xl border shadow-sm p-5" style={{ backgroundColor: '#FFF7D6', borderColor: '#F6D860' }}>
+              <div className="border p-5" style={{ backgroundColor: '#FFF7D6', borderColor: '#F6D860', borderRadius: '4px' }}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -673,29 +660,28 @@ export function PageReclamations() {
                   <div className="flex gap-2">
                     {selectedReliquat.status === 'active' && (
                       <button onClick={() => abandonReliquat(selectedReliquat.id)}
-                        className="px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-white">
+                        className="px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded hover:bg-white">
                         Abandonner
                       </button>
                     )}
                     <button onClick={() => deleteReliquatItem(selectedReliquat.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50">
+                      className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded hover:bg-red-50">
                       Supprimer
                     </button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-5">
-                  <div className="bg-white/60 rounded-lg p-3">
+                  <div className="p-3" style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '4px' }}>
                     <p className="text-[10px] text-amber-600 uppercase mb-1">Montant initial</p>
-                    <p className="text-lg font-bold text-amber-900">{formatEuros(selectedReliquat.initialAmount)}</p>
+                    <p className="text-lg font-bold text-amber-900 data-val">{formatEuros(selectedReliquat.initialAmount)}</p>
                   </div>
-                  <div className="bg-white/60 rounded-lg p-3">
+                  <div className="p-3" style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '4px' }}>
                     <p className="text-[10px] text-amber-600 uppercase mb-1">Reste à réclamer</p>
-                    <p className="text-lg font-bold text-amber-900">{formatEuros(selectedReliquat.remainingAmount)}</p>
+                    <p className="text-lg font-bold text-amber-900 data-val">{formatEuros(selectedReliquat.remainingAmount)}</p>
                   </div>
                 </div>
 
-                {/* Réclamations issues de ce reliquat */}
                 {(() => {
                   const linked = claims.filter(c => c.sourceReliquatId === selectedReliquat.id);
                   if (linked.length === 0) return null;
@@ -705,12 +691,13 @@ export function PageReclamations() {
                       <div className="space-y-1">
                         {linked.map(c => (
                           <button key={c.id} onClick={() => selectClaim(c.id)}
-                            className="w-full flex items-center justify-between bg-white/60 rounded-lg px-3 py-2 text-xs hover:bg-white/90 transition-colors">
+                            className="w-full flex items-center justify-between px-3 py-2 text-xs hover:opacity-90 transition-colors"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '4px' }}>
                             <span className="font-semibold text-amber-900">{c.reference}</span>
-                            <span className="text-amber-700">{formatEuros(c.montantReclame)}</span>
+                            <span className="text-amber-700 data-val">{formatEuros(c.montantReclame)}</span>
                           </button>
                         ))}
-                        <p className="text-[10px] text-amber-600 text-right pt-1">
+                        <p className="text-[10px] text-amber-600 text-right pt-1 data-val">
                           Total réclamé : {formatEuros(linked.reduce((s, c) => s + c.montantReclame, 0))}
                         </p>
                       </div>
@@ -723,12 +710,12 @@ export function PageReclamations() {
                     {!showClaimFromReliquat ? (
                       <button
                         onClick={() => { setShowClaimFromReliquat(true); setClaimFromReliquatAmount(selectedReliquat.remainingAmount.toFixed(2)); }}
-                        className="w-full py-2 text-sm font-semibold rounded-lg text-white"
-                        style={{ backgroundColor: '#6B2D8B' }}>
+                        className="w-full py-2 text-sm font-semibold text-white rounded"
+                        style={{ backgroundColor: '#1B6B40' }}>
                         Créer une réclamation depuis ce reliquat
                       </button>
                     ) : (
-                      <form onSubmit={submitClaimFromReliquat} className="bg-white/70 rounded-lg p-4 space-y-3">
+                      <form onSubmit={submitClaimFromReliquat} className="p-4 space-y-3" style={{ backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: '4px' }}>
                         <p className="text-xs font-semibold text-amber-900">Nouvelle réclamation depuis reliquat</p>
                         <div className="grid grid-cols-2 gap-3 text-xs text-amber-700">
                           <div>
@@ -737,7 +724,7 @@ export function PageReclamations() {
                           </div>
                           <div>
                             <p className="text-[10px] mb-0.5">Max réclamable</p>
-                            <p className="font-bold">{formatEuros(selectedReliquat.remainingAmount)}</p>
+                            <p className="font-bold data-val">{formatEuros(selectedReliquat.remainingAmount)}</p>
                           </div>
                         </div>
                         <div>
@@ -747,11 +734,11 @@ export function PageReclamations() {
                             className="w-full text-xs border border-amber-300 rounded px-2 py-1.5 bg-white" required />
                         </div>
                         <div className="flex gap-2">
-                          <button type="submit" className="flex-1 py-2 text-xs font-semibold text-white rounded-lg" style={{ backgroundColor: '#6B2D8B' }}>
+                          <button type="submit" className="flex-1 py-2 text-xs font-semibold text-white rounded" style={{ backgroundColor: '#1B6B40' }}>
                             Créer
                           </button>
                           <button type="button" onClick={() => setShowClaimFromReliquat(false)}
-                            className="flex-1 py-2 text-xs font-medium border border-amber-300 text-amber-800 rounded-lg hover:bg-white">
+                            className="flex-1 py-2 text-xs font-medium border border-amber-300 text-amber-800 rounded hover:bg-white">
                             Annuler
                           </button>
                         </div>

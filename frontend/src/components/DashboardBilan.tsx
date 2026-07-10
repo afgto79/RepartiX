@@ -198,7 +198,7 @@ export function DashboardBilan() {
         ].map(c => esc(String(c))).join(';');
       });
 
-    const BOM = String.fromCharCode(0xFEFF);  // accents lisibles dans Excel
+    const BOM = String.fromCharCode(0xFEFF);
     const csv = BOM + [header.join(';'), ...rows].join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -239,18 +239,19 @@ export function DashboardBilan() {
   if (loading) {
     return (
       <div className="p-4 max-w-7xl mx-auto">
-        <p className="text-gray-500">Chargement...</p>
+        <p className="text-slate-500">Chargement...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 max-w-7xl mx-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="p-4 max-w-7xl mx-auto">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">R</div>
+            <div className="w-9 h-9 flex items-center justify-center text-white font-bold"
+              style={{ backgroundColor: '#1B6B40', borderRadius: '4px' }}>R</div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900">
               RepartiX
               <span className="text-slate-400 font-medium text-base ml-1">| Alliance Healthcare</span>
@@ -262,19 +263,20 @@ export function DashboardBilan() {
           <button
             onClick={handleExportCSV}
             disabled={reclamations.length === 0}
-            className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            className="no-print px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Exporter CSV
           </button>
           <button
             onClick={() => alert('Fonctionnalite a venir')}
-            className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+            className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded hover:bg-slate-50 transition-all shadow-sm"
           >
             Analyse detaillee
           </button>
           <button
             onClick={() => { resetForm(); setShowForm(true); }}
-            className="px-3 py-2 text-xs font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-200"
+            className="px-3 py-2 text-xs font-semibold text-white rounded transition-all"
+            style={{ backgroundColor: '#1B6B40' }}
           >
             + Nouvelle reclamation
           </button>
@@ -283,28 +285,28 @@ export function DashboardBilan() {
 
       {/* Formulaire CRUD */}
       {showForm && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 shadow-sm">
+        <div className="bg-white border border-slate-200 p-5 mb-6" style={{ borderRadius: '4px' }}>
           <h3 className="text-sm font-bold text-slate-800 mb-3">{editId ? 'Modifier la reclamation' : 'Nouvelle reclamation'}</h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-slate-500 block mb-1">Mois debut</label>
               <input type="month" value={form.moisDebut} onChange={e => setForm({ ...form, moisDebut: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" required />
+                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" required />
             </div>
             <div>
               <label className="text-xs text-slate-500 block mb-1">Mois fin</label>
               <input type="month" value={form.moisFin} onChange={e => setForm({ ...form, moisFin: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" required />
+                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" required />
             </div>
             <div>
               <label className="text-xs text-slate-500 block mb-1">Date creation</label>
               <input type="date" value={form.dateCreation} onChange={e => setForm({ ...form, dateCreation: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" required />
+                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" required />
             </div>
             <div>
               <label className="text-xs text-slate-500 block mb-1">Statut</label>
               <select value={form.statut} onChange={e => setForm({ ...form, statut: e.target.value as Reclamation['statut'] })}
-                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg">
+                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded">
                 <option value="en_attente">En attente</option>
                 <option value="en_cours">En cours</option>
                 <option value="soldee">Soldee</option>
@@ -313,23 +315,23 @@ export function DashboardBilan() {
             <div>
               <label className="text-xs text-slate-500 block mb-1">Montant reclame</label>
               <input type="number" step="0.01" value={form.montantReclame} onChange={e => setForm({ ...form, montantReclame: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" required />
+                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" required />
             </div>
             <div>
               <label className="text-xs text-slate-500 block mb-1">Description</label>
               <input type="text" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" placeholder="Optionnel" />
+                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" placeholder="Optionnel" />
             </div>
             <div>
               <label className="text-xs text-slate-500 block mb-1">Engagement ORPEC</label>
               <input type="date" value={form.dateEngagementFournisseur} onChange={e => setForm({ ...form, dateEngagementFournisseur: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" placeholder="Optionnel" />
+                className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" placeholder="Optionnel" />
             </div>
             <div className="col-span-full flex gap-2 mt-1">
-              <button type="submit" className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              <button type="submit" className="px-4 py-2 text-xs font-semibold text-white rounded" style={{ backgroundColor: '#1B6B40' }}>
                 {editId ? 'Modifier' : 'Creer'}
               </button>
-              <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">
+              <button type="button" onClick={resetForm} className="px-4 py-2 text-xs font-semibold text-slate-600 border border-slate-200 rounded hover:bg-slate-50">
                 Annuler
               </button>
             </div>
@@ -340,13 +342,14 @@ export function DashboardBilan() {
       {/* KPI Principal + Alerte */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Creance principale */}
-        <div className="lg:col-span-2 bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden shadow-2xl">
+        <div className="lg:col-span-2 bg-slate-900 p-6 text-white relative overflow-hidden" style={{ borderRadius: '4px' }}>
           <div className="relative z-10">
             <p className="text-slate-400 text-xs font-medium mb-1">Reste a percevoir total</p>
             <div className="flex items-baseline gap-3 mb-4">
-              <h2 className="text-5xl font-bold tracking-tighter">{formatEuros(resteAPercevoir)}</h2>
+              <h2 className="text-5xl font-bold tracking-tighter data-val">{formatEuros(resteAPercevoir)}</h2>
               {totalReclame > 0 && (
-                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/30">
+                <span className="px-2 py-1 text-[10px] font-bold rounded-full border data-val"
+                  style={{ backgroundColor: 'rgba(27,107,64,0.3)', color: '#6EE7B7', borderColor: 'rgba(27,107,64,0.5)' }}>
                   Recouvrement {recouvrementPct}%
                 </span>
               )}
@@ -354,26 +357,26 @@ export function DashboardBilan() {
             <div className="grid grid-cols-3 gap-4 border-t border-slate-800 pt-4">
               <div>
                 <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Total reclame</p>
-                <p className="text-xl font-bold text-slate-200">{formatEuros(totalReclame)}</p>
+                <p className="text-xl font-bold text-slate-200 data-val">{formatEuros(totalReclame)}</p>
               </div>
               <div>
                 <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Deja percu</p>
-                <p className="text-xl font-bold text-emerald-400">{formatEuros(totalPercu)}</p>
+                <p className="text-xl font-bold data-val" style={{ color: '#6EE7B7' }}>{formatEuros(totalPercu)}</p>
               </div>
               <div title="Non contestable (palier generiques)">
                 <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-1">Ecart structurel</p>
-                <p className="text-xl font-bold text-slate-400">{formatEuros(cumul?.ecartStructurel ?? 0)}</p>
+                <p className="text-xl font-bold text-slate-400 data-val">{formatEuros(cumul?.ecartStructurel ?? 0)}</p>
               </div>
             </div>
           </div>
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(27,107,64,0.08)' }}></div>
         </div>
 
         {/* Alerte periodes non couvertes */}
         {periodeNonCouverte ? (
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200 rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+          <div className="border p-5 flex flex-col justify-between" style={{ backgroundColor: '#FFF5F5', borderColor: '#FECACA', borderRadius: '4px' }}>
             <div>
-              <div className="flex items-center gap-2 text-orange-700 mb-3">
+              <div className="flex items-center gap-2 mb-3" style={{ color: '#991B1B' }}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
@@ -387,23 +390,24 @@ export function DashboardBilan() {
               </p>
             </div>
             <div>
-              <div className="text-2xl font-bold text-orange-600 mb-3">&asymp; {formatEuros(montantNonCouvert)}</div>
+              <div className="text-2xl font-bold mb-3 data-val" style={{ color: '#991B1B' }}>&asymp; {formatEuros(montantNonCouvert)}</div>
               <button
                 onClick={() => alert('Fonctionnalite a venir')}
-                className="w-full py-2.5 bg-orange-600 text-white rounded-xl font-bold text-xs hover:bg-orange-700 transition-colors shadow-lg shadow-orange-200"
+                className="w-full py-2.5 text-white font-bold text-xs transition-colors"
+                style={{ backgroundColor: '#991B1B', borderRadius: '4px' }}
               >
                 Creer reclamation
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200 rounded-2xl p-5 flex flex-col justify-center items-center shadow-sm">
-            <div className="text-emerald-600 mb-2">
+          <div className="border p-5 flex flex-col justify-center items-center" style={{ backgroundColor: '#E8F5EE', borderColor: '#C8E8D5', borderRadius: '4px' }}>
+            <div className="mb-2" style={{ color: '#1B6B40' }}>
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="font-bold text-sm text-emerald-700">Toutes les periodes sont couvertes</p>
+            <p className="font-bold text-sm" style={{ color: '#1B6B40' }}>Toutes les periodes sont couvertes</p>
             <p className="text-xs text-slate-500 mt-1">Aucun ecart non reclame</p>
           </div>
         )}
@@ -414,20 +418,20 @@ export function DashboardBilan() {
         <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
           Dossiers de reclamation
           {reclamActives.length > 0 && (
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-lg">
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded"
+              style={{ backgroundColor: '#E8F5EE', color: '#1B6B40' }}>
               {reclamActives.length} actif{reclamActives.length > 1 ? 's' : ''}
             </span>
           )}
         </h3>
 
         {reclamActives.length === 0 && reclamSoldees.length === 0 && (
-          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center">
+          <div className="bg-white border border-slate-200 p-8 text-center" style={{ borderRadius: '4px' }}>
             <p className="text-slate-500 text-sm">Aucune reclamation enregistree.</p>
             <p className="text-slate-400 text-xs mt-1">Cliquez sur "+ Nouvelle reclamation" pour creer un dossier.</p>
           </div>
         )}
 
-        {/* Cartes reclamations actives */}
         {reclamActives.map(reclam => {
           const percu = getPercuForReclamation(reclam.id);
           const reste = reclam.montantReclame - percu;
@@ -439,69 +443,71 @@ export function DashboardBilan() {
             ? joursSince(reclam.dateEngagementFournisseur)
             : null;
           const enRetardEngagement = joursRetardEngagement !== null && joursRetardEngagement > 0;
-          const borderColor = reclam.statut === 'en_cours' ? 'border-blue-200' : 'border-red-200';
+          const isEnCours = reclam.statut === 'en_cours';
           const yearShort = reclam.reference.match(/#(\d{4})/)?.[1]?.slice(2) || '??';
-          const statusColor = reclam.statut === 'en_cours'
-            ? { bg: 'bg-blue-50', text: 'text-blue-700', numColor: 'text-blue-600', gradFrom: 'from-blue-500', gradTo: 'to-blue-600', barBg: 'bg-gradient-to-r from-blue-500 to-blue-600', btnBg: 'bg-slate-900 hover:bg-slate-800' }
-            : { bg: 'bg-red-50', text: 'text-red-700', numColor: 'text-red-600', gradFrom: 'from-red-500', gradTo: 'to-red-600', barBg: 'bg-red-500', btnBg: 'bg-red-600 hover:bg-red-700 shadow-md shadow-red-200' };
 
           return (
-            <div key={reclam.id} className={`bg-white border-2 ${borderColor} rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow`}>
+            <div key={reclam.id} className="bg-white border-2 overflow-hidden"
+              style={{ borderColor: isEnCours ? '#C8E8D5' : '#FECACA', borderRadius: '4px' }}>
               <div className="p-4">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex gap-3">
-                    <div className={`w-10 h-10 bg-gradient-to-br ${statusColor.gradFrom} ${statusColor.gradTo} rounded-lg flex items-center justify-center text-white font-bold shadow-md`}>
+                    <div className="w-10 h-10 flex items-center justify-center text-white font-bold"
+                      style={{ backgroundColor: isEnCours ? '#1B6B40' : '#991B1B', borderRadius: '4px' }}>
                       {yearShort}
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-900 text-base mb-0.5">Reclamation {reclam.reference}</h4>
                       <p className="text-xs text-slate-600">
                         {formatMoisCourt(reclam.moisDebut)} &rarr; {formatMoisCourt(reclam.moisFin)}
-                        <span className="text-slate-400 ml-1">({countMois(reclam.moisDebut, reclam.moisFin)} mois)</span>
-                        <span className="text-slate-400 ml-1">&bull; {new Date(reclam.dateCreation).toLocaleDateString('fr-FR')}</span>
+                        <span className="text-slate-400 ml-1">(<span className="data-val">{countMois(reclam.moisDebut, reclam.moisFin)}</span> mois)</span>
+                        <span className="text-slate-400 ml-1">&bull; <span className="data-val">{new Date(reclam.dateCreation).toLocaleDateString('fr-FR')}</span></span>
                       </p>
                       {isStale && (
                         <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded w-fit">
-                          <span className="animate-pulse">&#9679;</span> Relance necessaire ({jours}j)
+                          <span className="animate-pulse">&#9679;</span> Relance necessaire (<span className="data-val">{jours}</span>j)
                         </div>
                       )}
                       {enRetardEngagement && (
                         <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded w-fit"
                           title={`Engagement ORPEC du ${new Date(reclam.dateEngagementFournisseur!).toLocaleDateString('fr-FR')} depasse`}>
-                          &#9888; Retard {joursRetardEngagement} jour{joursRetardEngagement! > 1 ? 's' : ''}
+                          &#9888; Retard <span className="data-val">{joursRetardEngagement}</span> jour{joursRetardEngagement! > 1 ? 's' : ''}
                         </div>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-block px-2 py-1 ${statusColor.bg} ${statusColor.text} text-[10px] font-bold rounded-md mb-1 uppercase`}>
-                      {reclam.statut === 'en_cours' ? 'En cours' : 'En attente'}
+                    <span className="inline-block px-2 py-1 text-[10px] font-bold rounded mb-1 uppercase"
+                      style={isEnCours
+                        ? { backgroundColor: '#E8F5EE', color: '#1B6B40' }
+                        : { backgroundColor: '#FEF2F2', color: '#B91C1C' }}>
+                      {isEnCours ? 'En cours' : 'En attente'}
                     </span>
-                    <div className={`text-2xl font-bold ${statusColor.numColor}`}>{formatEuros(reste)}</div>
+                    <div className="text-2xl font-bold data-val" style={{ color: isEnCours ? '#1B6B40' : '#991B1B' }}>{formatEuros(reste)}</div>
                   </div>
                 </div>
 
                 {/* Infos financieres */}
                 <div className="grid grid-cols-3 gap-3 mb-3 text-xs">
-                  <div className="bg-slate-50 rounded-lg p-2">
+                  <div className="bg-slate-50 p-2" style={{ borderRadius: '4px' }}>
                     <p className="text-slate-500 mb-0.5">Reclame</p>
-                    <p className="font-bold text-slate-900">{formatEuros(reclam.montantReclame)}</p>
+                    <p className="font-bold text-slate-900 data-val">{formatEuros(reclam.montantReclame)}</p>
                   </div>
-                  <div className={percu > 0 ? 'bg-emerald-50 rounded-lg p-2' : 'bg-slate-100 rounded-lg p-2'}>
+                  <div className="p-2" style={{ backgroundColor: percu > 0 ? '#E8F5EE' : '#F1F5F9', borderRadius: '4px' }}>
                     <p className="text-slate-500 mb-0.5">Percu</p>
-                    <p className={`font-bold ${percu > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>{formatEuros(percu)}</p>
+                    <p className="font-bold data-val" style={{ color: percu > 0 ? '#1B6B40' : '#94A3B8' }}>{formatEuros(percu)}</p>
                   </div>
-                  <div className={`${pct > 0 ? 'bg-blue-50' : 'bg-red-50'} rounded-lg p-2`}>
+                  <div className="p-2" style={{ backgroundColor: pct > 0 ? '#E8F5EE' : '#FEF2F2', borderRadius: '4px' }}>
                     <p className="text-slate-500 mb-0.5">Recouvrement</p>
-                    <p className={`font-bold ${pct > 0 ? 'text-blue-700' : 'text-red-700'}`}>{pct}%</p>
+                    <p className="font-bold data-val" style={{ color: pct > 0 ? '#1B6B40' : '#991B1B' }}>{pct}%</p>
                   </div>
                 </div>
 
                 {/* Barre progression */}
                 <div className="mb-3">
                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className={`h-full ${statusColor.barBg}`} style={{ width: `${pct}%` }}></div>
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: isEnCours ? '#1B6B40' : '#991B1B' }}></div>
                   </div>
                 </div>
 
@@ -513,13 +519,13 @@ export function DashboardBilan() {
                     </summary>
                     <div className="space-y-1">
                       {regulsLiees.map(reg => (
-                        <div key={reg.id} className="bg-emerald-50 rounded-lg p-2 text-xs border border-emerald-100">
+                        <div key={reg.id} className="p-2 text-xs border" style={{ backgroundColor: '#E8F5EE', borderColor: '#C8E8D5', borderRadius: '4px' }}>
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-semibold text-emerald-700">{reg.description || 'Regularisation'}</p>
-                              <p className="text-slate-500">{new Date(reg.date).toLocaleDateString('fr-FR')}</p>
+                              <p className="font-semibold" style={{ color: '#1B6B40' }}>{reg.description || 'Regularisation'}</p>
+                              <p className="text-slate-500 data-val">{new Date(reg.date).toLocaleDateString('fr-FR')}</p>
                             </div>
-                            <p className="font-bold text-emerald-600">+{formatEuros(reg.montant)}</p>
+                            <p className="font-bold data-val" style={{ color: '#1B6B40' }}>+{formatEuros(reg.montant)}</p>
                           </div>
                         </div>
                       ))}
@@ -533,31 +539,33 @@ export function DashboardBilan() {
                 <div className="grid grid-cols-5 gap-2">
                   <button
                     onClick={() => alert('Fonctionnalite a venir')}
-                    className="py-1.5 text-xs font-semibold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="py-1.5 text-xs font-semibold border border-slate-200 rounded hover:bg-slate-50 transition-colors"
                   >
                     Courrier
                   </button>
                   <button
                     onClick={() => alert('Fonctionnalite a venir')}
-                    className={`py-1.5 text-xs font-semibold text-white rounded-lg transition-colors ${statusColor.btnBg}`}
+                    className="py-1.5 text-xs font-semibold text-white rounded transition-colors"
+                    style={{ backgroundColor: isEnCours ? '#1A2332' : '#991B1B' }}
                   >
                     Relancer
                   </button>
                   <button
                     onClick={() => regulFormId === reclam.id ? setRegulFormId(null) : startRegul(reclam.id)}
-                    className="py-1.5 text-xs font-semibold border border-blue-200 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                    className="py-1.5 text-xs font-semibold border rounded transition-colors"
+                    style={{ color: '#1B6B40', backgroundColor: '#E8F5EE', borderColor: '#C8E8D5' }}
                   >
                     + Regul.
                   </button>
                   <button
                     onClick={() => startEdit(reclam)}
-                    className="py-1.5 text-xs font-semibold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="py-1.5 text-xs font-semibold border border-slate-200 rounded hover:bg-slate-50 transition-colors"
                   >
                     Modifier
                   </button>
                   <button
                     onClick={() => handleDelete(reclam.id)}
-                    className="py-1.5 text-xs font-semibold border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                    className="py-1.5 text-xs font-semibold border border-red-200 text-red-600 rounded hover:bg-red-50 transition-colors"
                   >
                     Supprimer
                   </button>
@@ -565,33 +573,33 @@ export function DashboardBilan() {
 
                 {/* Mini-formulaire + Regul. */}
                 {regulFormId === reclam.id && (
-                  <form onSubmit={e => handleRegulSubmit(e, reclam.id)} className="mt-3 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                  <form onSubmit={e => handleRegulSubmit(e, reclam.id)} className="mt-3 border p-3" style={{ backgroundColor: '#E8F5EE', borderColor: '#C8E8D5', borderRadius: '4px' }}>
                     <p className="text-xs font-bold text-slate-700 mb-2">Enregistrer une regularisation recue</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-0.5">Montant (EUR)</label>
                         <input type="number" step="0.01" value={regulForm.montant} autoFocus
                           onChange={e => setRegulForm({ ...regulForm, montant: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" required />
+                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" required />
                       </div>
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-0.5">Date</label>
                         <input type="date" value={regulForm.date}
                           onChange={e => setRegulForm({ ...regulForm, date: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" required />
+                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" required />
                       </div>
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-0.5">Description</label>
                         <input type="text" value={regulForm.description}
                           onChange={e => setRegulForm({ ...regulForm, description: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg" placeholder="Optionnel" />
+                          className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded" placeholder="Optionnel" />
                       </div>
                     </div>
                     <div className="flex gap-2 mt-2">
-                      <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                      <button type="submit" className="px-3 py-1.5 text-xs font-semibold text-white rounded" style={{ backgroundColor: '#1B6B40' }}>
                         Ajouter
                       </button>
-                      <button type="button" onClick={() => setRegulFormId(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-white">
+                      <button type="button" onClick={() => setRegulFormId(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded hover:bg-white">
                         Annuler
                       </button>
                     </div>
@@ -615,28 +623,29 @@ export function DashboardBilan() {
               {reclamSoldees.map(reclam => {
                 const yearShort = reclam.reference.match(/#(\d{4})/)?.[1]?.slice(2) || '??';
                 return (
-                  <div key={reclam.id} className="bg-white border border-emerald-200 rounded-xl p-3">
+                  <div key={reclam.id} className="bg-white border p-3" style={{ borderColor: '#C8E8D5', borderRadius: '4px' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
+                        <div className="w-8 h-8 flex items-center justify-center text-white font-bold text-sm"
+                          style={{ backgroundColor: '#1B6B40', borderRadius: '4px' }}>
                           {yearShort}
                         </div>
                         <div>
                           <h4 className="font-bold text-slate-900 text-sm">Reclamation {reclam.reference}</h4>
                           <p className="text-xs text-slate-600">
                             {formatMoisCourt(reclam.moisDebut)} &rarr; {formatMoisCourt(reclam.moisFin)}
-                            <span className="text-slate-400 ml-1">({countMois(reclam.moisDebut, reclam.moisFin)} mois)</span>
+                            <span className="text-slate-400 ml-1">(<span className="data-val">{countMois(reclam.moisDebut, reclam.moisFin)}</span> mois)</span>
                           </p>
                         </div>
                       </div>
                       <div className="text-right flex items-center gap-3">
                         <div>
-                          <p className="text-lg font-bold text-emerald-600">{formatEuros(reclam.montantReclame)}</p>
+                          <p className="text-lg font-bold data-val" style={{ color: '#1B6B40' }}>{formatEuros(reclam.montantReclame)}</p>
                           <p className="text-[10px] text-slate-500 uppercase">Soldee</p>
                         </div>
                         <button
                           onClick={() => handleDelete(reclam.id)}
-                          className="p-1.5 text-xs text-red-400 hover:text-red-600 border border-transparent hover:border-red-200 rounded-lg transition-colors"
+                          className="p-1.5 text-xs text-red-400 hover:text-red-600 border border-transparent hover:border-red-200 rounded transition-colors"
                           title="Supprimer"
                         >
                           &times;
