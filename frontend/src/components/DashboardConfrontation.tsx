@@ -220,11 +220,15 @@ export function DashboardConfrontation() {
   const [loading, setLoading] = useState(true);
   const [generiques, setGeneriques] = useState<GeneriquesData | null>(null);
   const [generiquesLoading, setGeneriquesLoading] = useState(false);
+  const [withGeneriques, setWithGeneriques] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api.getAnnees().then(setYears).catch(console.error);
-    api.getGeneriques().then(setGeneriques).catch(console.error);
+    api.getGeneriques().then(data => {
+      setGeneriques(data);
+      setWithGeneriques(!!data);
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -248,6 +252,7 @@ export function DashboardConfrontation() {
         const json = JSON.parse(ev.target?.result as string);
         const result = await api.importGeneriques(json);
         setGeneriques(result);
+        setWithGeneriques(true);
       } catch (err) {
         alert('Erreur import JSON : ' + (err instanceof Error ? err.message : String(err)));
       } finally {
@@ -258,20 +263,18 @@ export function DashboardConfrontation() {
     reader.readAsText(file);
   }
 
-  async function handleDeleteGeneriques() {
-    if (!confirm('Supprimer les données génériques ? A2 sera recalculé sans ces données.')) return;
-    await api.deleteGeneriques();
-    setGeneriques(null);
-  }
-
   const quarters: AnalyseRemise[][] = [[], [], [], []];
   for (const m of mois) quarters[getQuarter(m.mois)].push(m);
+
+  function getA2(r: AnalyseRemise): number | undefined {
+    return withGeneriques ? r.theoriques?.girophamProxy : r.theoriques?.girophamBrut;
+  }
 
   const annualA1 = mois.some(m => m.theoriques?.orpecAssiette !== undefined)
     ? mois.reduce((s, m) => s + (m.theoriques?.orpecAssiette ?? 0), 0)
     : undefined;
-  const annualA2 = mois.some(m => m.theoriques?.girophamProxy !== undefined)
-    ? mois.reduce((s, m) => s + (m.theoriques?.girophamProxy ?? 0), 0)
+  const annualA2 = mois.some(m => getA2(m) !== undefined)
+    ? mois.reduce((s, m) => s + (getA2(m) ?? 0), 0)
     : undefined;
   const annualA3 = mois.reduce((s, m) => s + (m.theoriques?.allianceTTC ?? 0), 0);
   const annualB = mois.some(m => m.remiseAnnoncee !== undefined)
@@ -299,7 +302,7 @@ export function DashboardConfrontation() {
             Triptyque A / B / C — <span className="data-val">{annee}</span>
           </h2>
           <p className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>
-            A1 = ORPEC (HT) · A2 = Giropharm{generiques ? ` (${generiques.entrees.length} entrées)` : ' (N/A)'} · A3 = Alliance TTC · B = Annoncé (HT) · C = Versé (TTC)
+            A1 = ORPEC (HT) · A2 = Giropharm{generiques && withGeneriques ? ` (${generiques.entrees.length} entrées)` : ' (N/A)'} · A3 = Alliance TTC · B = Annoncé (HT) · C = Versé (TTC)
           </p>
         </div>
 
@@ -315,35 +318,45 @@ export function DashboardConfrontation() {
 
           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportGeneriques} />
 
-          {generiques ? (
+          {/* Toggle CA génériques — visible seulement si des données sont chargées */}
+          {generiques && (
             <button
-              onClick={handleDeleteGeneriques}
+              onClick={() => setWithGeneriques(v => !v)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors"
-              style={{
+              title={withGeneriques
+                ? `Avec génériques (${generiques.entrees.length} entrées — importé le ${new Date(generiques.dateImport).toLocaleDateString('fr-FR')})`
+                : 'Sans génériques — A2 masqué (données conservées en base)'}
+              style={withGeneriques ? {
                 border: '1px solid #C8E8D5',
                 borderRadius: '3px',
                 color: '#1B6B40',
                 backgroundColor: '#E8F5EE',
-              }}
-              title={`Importé le ${new Date(generiques.dateImport).toLocaleDateString('fr-FR')}`}
-            >
-              ✓ Génériques
-            </button>
-          ) : (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={generiquesLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
-              style={{
-                border: '1px solid #FDE68A',
+              } : {
+                border: '1px solid #FECACA',
                 borderRadius: '3px',
-                color: '#B45309',
-                backgroundColor: '#FFFBEB',
+                color: '#991B1B',
+                backgroundColor: '#FEF2F2',
               }}
             >
-              {generiquesLoading ? '…' : '⊕ Importer génériques'}
+              {withGeneriques ? '✓ CA génériques' : '✗ CA génériques'}
             </button>
           )}
+
+          {/* Bouton import / MAJ */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={generiquesLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50"
+            title="Fichier attendu : generiques_orpec_2025_2026.json"
+            style={{
+              border: '1px solid #E2E8F0',
+              borderRadius: '3px',
+              color: '#64748B',
+              backgroundColor: '#fff',
+            }}
+          >
+            {generiquesLoading ? '…' : generiques ? '↺ MAJ CA générique' : '⊕ Import CA générique'}
+          </button>
 
           {mois.length > 0 && (
             <button
@@ -441,6 +454,9 @@ export function DashboardConfrontation() {
               {quarters.map((qRows, qi) => {
                 if (qRows.length === 0) return null;
                 const agg = aggregateQuarter(qRows);
+                const qA2 = qRows.some(r => getA2(r) !== undefined)
+                  ? qRows.reduce((s, r) => s + (getA2(r) ?? 0), 0)
+                  : undefined;
                 const alert = hasQuarterAlert(agg);
                 const dc = fmtDelta(agg.sumDeltaCalcul);
                 const dp = fmtDelta(agg.sumDeltaPaiement);
@@ -473,7 +489,7 @@ export function DashboardConfrontation() {
                             {moisLabel}
                           </td>
                           <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B', ...SEP_LEFT }}>{fmt(r.theoriques?.orpecAssiette)}</td>
-                          <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B' }}>{fmt(r.theoriques?.girophamProxy)}</td>
+                          <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B' }}>{fmt(getA2(r))}</td>
                           <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B' }}>{fmt(r.theoriques?.allianceTTC)}</td>
                           <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B', ...SEP_LEFT }}>{fmt(r.remiseAnnoncee)}</td>
                           <td className="data-val px-3 py-2 text-right" style={{ color: '#64748B' }}>{formatEuros(r.remiseReelle)}</td>
@@ -501,7 +517,7 @@ export function DashboardConfrontation() {
                         )}
                       </td>
                       <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332', ...SEP_LEFT }}>{fmt(agg.sumA1)}</td>
-                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332' }}>{fmt(agg.sumA2)}</td>
+                      <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332' }}>{fmt(qA2)}</td>
                       <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332' }}>{formatEuros(agg.sumA3)}</td>
                       <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332', ...SEP_LEFT }}>{fmt(agg.sumB)}</td>
                       <td className="data-val px-3 py-2 text-right text-[10px] font-semibold" style={{ color: '#1A2332' }}>{formatEuros(agg.sumC)}</td>

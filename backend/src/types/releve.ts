@@ -37,7 +37,8 @@ export interface AnalyseRemise {
   // Triptyque C5.3 — A=théorique, B=annoncé, C=versé
   theoriques: {
     orpecAssiette?: number;   // A1 : 3% × assiette Sans RSF saisie
-    girophamProxy?: number;   // A2 : non implémenté (REMISE_GENERIQUE non dispo dans décades)
+    girophamProxy?: number;   // A2 : 3% × (debitHT − CA_génériques≥350€ − Alvita)
+    girophamBrut?: number;    // A2 brut : 3% × (debitHT − Alvita), sans déduction génériques
     allianceTTC: number;      // A3 : 3% × assiette TTC Alliance (estimation actuelle)
   };
   remiseAnnoncee?: number;    // B : montantHT depuis orpecMois.remiseAnnoncee

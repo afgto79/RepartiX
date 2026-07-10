@@ -17,6 +17,7 @@ export interface AnalyseRemise {
   theoriques?: {
     orpecAssiette?: number;
     girophamProxy?: number;
+    girophamBrut?: number;
     allianceTTC: number;
   };
   remiseAnnoncee?: number;

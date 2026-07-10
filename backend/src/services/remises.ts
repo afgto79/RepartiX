@@ -108,14 +108,18 @@ function analyserMois(
   const orpecAssiette = orpecDisponible ? arrondir(orpecMois!.remiseDue!) : undefined;
 
   // A2 Giropharm proxy : 3% × (debitHT mensuel − CA_generiques(≥350€/labo) − achatsAlvita)
+  const debitHTMensuel = decades.reduce((s, d) => s + (d.debitHT ?? 0), 0);
+  const alvita = orpecMois?.achatsAlvita ?? 0;
   let girophamProxy: number | undefined;
+  let girophamBrut: number | undefined;
+  if (debitHTMensuel !== 0) {
+    girophamBrut = arrondir((debitHTMensuel - alvita) * 0.03);
+  }
   if (generiquesData) {
     const [anneeNum, moisNum] = moisKey.split('-').map(Number);
     const caGeneriques = generiquesData.entrees
       .filter(e => e.annee === anneeNum && e.mois === moisNum && e.netHT >= SEUIL_GENERIQUES_LABO)
       .reduce((s, e) => s + e.netHT, 0);
-    const debitHTMensuel = decades.reduce((s, d) => s + (d.debitHT ?? 0), 0);
-    const alvita = orpecMois?.achatsAlvita ?? 0;
     girophamProxy = arrondir((debitHTMensuel - caGeneriques - alvita) * 0.03);
   }
   const remiseAnnonceeVal = orpecMois?.remiseAnnoncee?.montantHT !== undefined
@@ -166,6 +170,7 @@ function analyserMois(
     theoriques: {
       orpecAssiette,
       girophamProxy,
+      girophamBrut,
       allianceTTC,
     },
     remiseAnnoncee: remiseAnnonceeVal,
