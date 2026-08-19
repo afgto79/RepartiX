@@ -41,3 +41,6 @@ desktop.ini
 
 # Local assistant config
 .claude/
+
+# Relevés temporaires (données clients réelles, non versionnées - repo public)
+public/temp modèles dernière page décades/
