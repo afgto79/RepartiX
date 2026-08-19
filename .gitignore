@@ -30,3 +30,14 @@ backend/tests/fixtures/*.pdf
 # OS files
 nul
 Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak.*
+*.bak
+
+# Build cache
+*.tsbuildinfo
+
+# Local assistant config
+.claude/

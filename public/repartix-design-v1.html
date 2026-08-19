@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepartiX - Design v1 (KPI-Centric)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-8">
+        <!-- Header -->
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">RepartiX</h1>
+                <p class="text-gray-500 text-sm mt-1">Contrôle Remises Alliance Healthcare</p>
+            </div>
+            <div class="flex gap-3">
+                <select class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium">
+                    <option>2026</option>
+                    <option>2025</option>
+                    <option>2024</option>
+                </select>
+                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                    Import PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- KPIs principaux -->
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <!-- Retard Global -->
+            <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border border-red-200">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <p class="text-red-700 text-sm font-medium uppercase tracking-wide">Retard Global</p>
+                        <p class="text-xs text-red-600 mt-1">Toutes années confondues</p>
+                    </div>
+                    <div class="bg-red-200 rounded-full p-2">
+                        <svg class="w-5 h-5 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-4xl font-bold text-red-900 mb-3">-2 098,19 €</div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-red-700">Brut: -15 598,19 €</span>
+                    <span class="text-red-500">•</span>
+                    <span class="text-green-700">Régul: +13 500 €</span>
+                </div>
+                <div class="mt-4 bg-white/50 rounded-full h-2 overflow-hidden">
+                    <div class="bg-green-500 h-full" style="width: 87%"></div>
+                </div>
+                <p class="text-xs text-red-700 mt-2">87% rattrapé</p>
+            </div>
+
+            <!-- Retard Année en cours -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <p class="text-gray-700 text-sm font-medium uppercase tracking-wide">Retard 2026</p>
+                        <p class="text-xs text-gray-500 mt-1">Année en cours</p>
+                    </div>
+                    <div class="bg-orange-100 rounded-full p-2">
+                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-4xl font-bold text-gray-900 mb-3">-448,33 €</div>
+                <div class="text-sm text-gray-600">1 mois comptabilisé</div>
+                <div class="mt-4 bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div class="bg-red-400 h-full" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">0% rattrapé</p>
+            </div>
+
+            <!-- Statut global -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <p class="text-gray-700 text-sm font-medium uppercase tracking-wide">Conformité</p>
+                        <p class="text-xs text-gray-500 mt-1">Derniers 12 mois</p>
+                    </div>
+                    <div class="bg-yellow-100 rounded-full p-2">
+                        <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2 mb-3">
+                    <div class="text-4xl font-bold text-gray-900">8/12</div>
+                    <div class="text-lg text-gray-500">mois</div>
+                </div>
+                <div class="text-sm text-gray-600">en retard de paiement</div>
+                <div class="mt-4 flex gap-1">
+                    <div class="flex-1 bg-red-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-red-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-red-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-red-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-red-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-red-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-red-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-red-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-green-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-green-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-green-200 h-2 rounded"></div>
+                    <div class="flex-1 bg-green-200 h-2 rounded"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evolution mensuelle + Régularisations -->
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <!-- Graphique -->
+            <div class="col-span-2 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900">Évolution du delta mensuel</h2>
+                    <div class="flex gap-2 text-xs">
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-red-400 rounded"></div>
+                            <span class="text-gray-600">Retard</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-green-400 rounded"></div>
+                            <span class="text-gray-600">Avance</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-64 flex items-end justify-between gap-2">
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 45%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Jan</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 52%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Fév</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 54%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Mar</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 64%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Avr</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-green-400 rounded-t" style="height: 3%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Mai</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 5%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Juin</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 48%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Juil</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 42%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Août</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 38%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Sep</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 35%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Oct</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 30%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Nov</span>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-red-400 rounded-t" style="height: 25%"></div>
+                        <span class="text-xs text-gray-500 mt-2">Déc</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Régularisations -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900">Régularisations</h2>
+                    <button class="text-blue-600 text-sm font-medium hover:text-blue-700">+ Ajouter</button>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium text-green-900">+13 500,00 €</span>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-xs text-green-700">Rattrappage 2024</p>
+                        <p class="text-xs text-gray-500 mt-1">15 janvier 2025</p>
+                    </div>
+                    <div class="p-3 border-2 border-dashed border-gray-200 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Aucune autre régularisation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des mois -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-900">Détail mensuel 2025</h2>
+            </div>
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3">Mois</th>
+                        <th class="px-6 py-3 text-right">Total HT</th>
+                        <th class="px-6 py-3 text-right">Attendue (3%)</th>
+                        <th class="px-6 py-3 text-right">Réelle</th>
+                        <th class="px-6 py-3 text-right">Delta</th>
+                        <th class="px-6 py-3">Statut</th>
+                        <th class="px-6 py-3">Décades</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">Janvier 2025</td>
+                        <td class="px-6 py-4 text-right text-gray-600">34 090,21 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">1 022,71 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">765,42 €</td>
+                        <td class="px-6 py-4 text-right font-semibold text-red-600">-257,29 €</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Retard
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">1, 2, 3</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">Février 2025</td>
+                        <td class="px-6 py-4 text-right text-gray-600">27 918,85 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">837,57 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">82,87 €</td>
+                        <td class="px-6 py-4 text-right font-semibold text-red-600">-754,70 €</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Retard
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">1, 2, 3</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">Mars 2025</td>
+                        <td class="px-6 py-4 text-right text-gray-600">28 867,60 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">866,03 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">82,87 €</td>
+                        <td class="px-6 py-4 text-right font-semibold text-red-600">-783,16 €</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Retard
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">1, 2, 3</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">Avril 2025</td>
+                        <td class="px-6 py-4 text-right text-gray-600">33 320,13 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">999,60 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">72,97 €</td>
+                        <td class="px-6 py-4 text-right font-semibold text-red-600">-926,63 €</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Retard
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">1, 2, 3</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">Mai 2025</td>
+                        <td class="px-6 py-4 text-right text-gray-600">31 532,91 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">945,99 €</td>
+                        <td class="px-6 py-4 text-right text-gray-600">896,97 €</td>
+                        <td class="px-6 py-4 text-right font-semibold text-green-600">-49,02 €</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Quasi OK
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">1, 2, 3</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

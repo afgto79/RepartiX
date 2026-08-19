@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepartiX - Design v2 (Timeline)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-8">
+        <!-- Header compact -->
+        <div class="mb-8 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-bold text-gray-900">RepartiX</h1>
+                <select class="px-3 py-1.5 border border-gray-300 rounded-lg bg-white text-sm">
+                    <option>2026</option>
+                    <option>2025</option>
+                    <option>2024</option>
+                </select>
+            </div>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                Import PDF
+            </button>
+        </div>
+
+        <!-- Situation globale - Compact en haut -->
+        <div class="mb-8 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div class="grid grid-cols-4 gap-8">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Retard total</p>
+                    <div class="text-3xl font-bold text-red-600">-2 098 €</div>
+                    <p class="text-xs text-gray-500 mt-1">Toutes années</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Régularisé</p>
+                    <div class="text-3xl font-bold text-green-600">+13 500 €</div>
+                    <div class="mt-2 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-green-500 h-full" style="width: 87%"></div>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Année 2026</p>
+                    <div class="text-3xl font-bold text-orange-600">-448 €</div>
+                    <p class="text-xs text-gray-500 mt-1">1 mois comptabilisé</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Taux conformité</p>
+                    <div class="text-3xl font-bold text-gray-900">33%</div>
+                    <p class="text-xs text-gray-500 mt-1">4/12 mois OK</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline principale -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">Timeline 2025</h2>
+                <div class="flex items-center gap-4">
+                    <button class="text-blue-600 text-sm font-medium hover:text-blue-700">+ Régularisation</button>
+                    <div class="flex gap-2 text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
+                            <span class="text-gray-600">OK</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
+                            <span class="text-gray-600">Léger écart</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+                            <span class="text-gray-600">Retard</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <!-- Timeline visuelle -->
+                <div class="relative">
+                    <!-- Ligne verticale -->
+                    <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+
+                    <!-- Mois -->
+                    <div class="space-y-6">
+                        <!-- Janvier -->
+                        <div class="relative flex gap-6">
+                            <div class="flex-shrink-0 w-12 flex flex-col items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full border-4 border-white shadow-md z-10"></div>
+                                <span class="text-xs font-medium text-gray-500 mt-2">JAN</span>
+                            </div>
+                            <div class="flex-1 pb-6">
+                                <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">Janvier 2025</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Total HT: 34 090,21 €</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-bold text-red-600">-257,29 €</div>
+                                            <p class="text-xs text-gray-500">de retard</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 text-sm">
+                                        <div>
+                                            <p class="text-gray-500">Attendue</p>
+                                            <p class="font-medium text-gray-900">1 022,71 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Réelle</p>
+                                            <p class="font-medium text-gray-900">765,42 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Décades</p>
+                                            <p class="font-medium text-gray-900">1, 2, 3</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Février -->
+                        <div class="relative flex gap-6">
+                            <div class="flex-shrink-0 w-12 flex flex-col items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full border-4 border-white shadow-md z-10"></div>
+                                <span class="text-xs font-medium text-gray-500 mt-2">FÉV</span>
+                            </div>
+                            <div class="flex-1 pb-6">
+                                <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">Février 2025</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Total HT: 27 918,85 €</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-bold text-red-600">-754,70 €</div>
+                                            <p class="text-xs text-gray-500">de retard</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 text-sm">
+                                        <div>
+                                            <p class="text-gray-500">Attendue</p>
+                                            <p class="font-medium text-gray-900">837,57 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Réelle</p>
+                                            <p class="font-medium text-gray-900">82,87 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Décades</p>
+                                            <p class="font-medium text-gray-900">1, 2, 3</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mars -->
+                        <div class="relative flex gap-6">
+                            <div class="flex-shrink-0 w-12 flex flex-col items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full border-4 border-white shadow-md z-10"></div>
+                                <span class="text-xs font-medium text-gray-500 mt-2">MAR</span>
+                            </div>
+                            <div class="flex-1 pb-6">
+                                <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">Mars 2025</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Total HT: 28 867,60 €</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-bold text-red-600">-783,16 €</div>
+                                            <p class="text-xs text-gray-500">de retard</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 text-sm">
+                                        <div>
+                                            <p class="text-gray-500">Attendue</p>
+                                            <p class="font-medium text-gray-900">866,03 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Réelle</p>
+                                            <p class="font-medium text-gray-900">82,87 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Décades</p>
+                                            <p class="font-medium text-gray-900">1, 2, 3</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Avril -->
+                        <div class="relative flex gap-6">
+                            <div class="flex-shrink-0 w-12 flex flex-col items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full border-4 border-white shadow-md z-10"></div>
+                                <span class="text-xs font-medium text-gray-500 mt-2">AVR</span>
+                            </div>
+                            <div class="flex-1 pb-6">
+                                <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">Avril 2025</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Total HT: 33 320,13 €</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-bold text-red-600">-926,63 €</div>
+                                            <p class="text-xs text-gray-500">de retard</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 text-sm">
+                                        <div>
+                                            <p class="text-gray-500">Attendue</p>
+                                            <p class="font-medium text-gray-900">999,60 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Réelle</p>
+                                            <p class="font-medium text-gray-900">72,97 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Décades</p>
+                                            <p class="font-medium text-gray-900">1, 2, 3</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mai -->
+                        <div class="relative flex gap-6">
+                            <div class="flex-shrink-0 w-12 flex flex-col items-center">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full border-4 border-white shadow-md z-10"></div>
+                                <span class="text-xs font-medium text-gray-500 mt-2">MAI</span>
+                            </div>
+                            <div class="flex-1 pb-6">
+                                <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">Mai 2025</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Total HT: 31 532,91 €</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-bold text-yellow-600">-49,02 €</div>
+                                            <p class="text-xs text-gray-500">écart mineur</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 text-sm">
+                                        <div>
+                                            <p class="text-gray-500">Attendue</p>
+                                            <p class="font-medium text-gray-900">945,99 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Réelle</p>
+                                            <p class="font-medium text-gray-900">896,97 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Décades</p>
+                                            <p class="font-medium text-gray-900">1, 2, 3</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Juin -->
+                        <div class="relative flex gap-6">
+                            <div class="flex-shrink-0 w-12 flex flex-col items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full border-4 border-white shadow-md z-10"></div>
+                                <span class="text-xs font-medium text-gray-500 mt-2">JUIN</span>
+                            </div>
+                            <div class="flex-1 pb-6">
+                                <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">Juin 2025</h3>
+                                            <p class="text-sm text-gray-600 mt-1">Total HT: 26 466,46 €</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-bold text-red-600">-67,48 €</div>
+                                            <p class="text-xs text-gray-500">de retard</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 text-sm">
+                                        <div>
+                                            <p class="text-gray-500">Attendue</p>
+                                            <p class="font-medium text-gray-900">793,99 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Réelle</p>
+                                            <p class="font-medium text-gray-900">726,51 €</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500">Décades</p>
+                                            <p class="font-medium text-gray-900">1, 2, 3</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Régularisation -->
+                        <div class="relative flex gap-6">
+                            <div class="flex-shrink-0 w-12 flex flex-col items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full border-4 border-white shadow-md z-10">
+                                    <svg class="w-2 h-2 text-white absolute top-0.5 left-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-xs font-medium text-green-600 mt-2">RÉGUL</span>
+                            </div>
+                            <div class="flex-1 pb-6">
+                                <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">Régularisation 2024</h3>
+                                            <p class="text-sm text-gray-600 mt-1">15 janvier 2025</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-bold text-green-600">+13 500 €</div>
+                                            <button class="text-xs text-gray-500 hover:text-gray-700 mt-1">Modifier</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

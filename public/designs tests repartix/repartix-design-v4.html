@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepartiX - Design v4 (Pilotage Réclamations)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .pulse-amount {
+            animation: pulse-soft 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-8">
+        <!-- Header -->
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">RepartiX</h1>
+                <p class="text-sm text-gray-500 mt-1">Pilotage des réclamations Alliance Healthcare</p>
+            </div>
+            <div class="flex gap-3">
+                <button class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium hover:bg-gray-50">
+                    Analyse détaillée
+                </button>
+                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                    Import PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- CRÉANCE TOTALE - Zone centrale -->
+        <div class="mb-8 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-8 text-white shadow-2xl">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <p class="text-red-100 text-sm uppercase tracking-wider mb-2">Reste à percevoir (toutes réclamations)</p>
+                    <div class="pulse-amount">
+                        <div class="text-6xl font-bold mb-4">2 098,19 €</div>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm">
+                        <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                            <span class="text-red-100">Total réclamé:</span>
+                            <span class="font-semibold ml-2">15 598,19 €</span>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                            <span class="text-red-100">Déjà perçu:</span>
+                            <span class="font-semibold ml-2">13 500,00 €</span>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                            <span class="text-red-100">Taux recouvrement:</span>
+                            <span class="font-semibold ml-2">87%</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button class="px-8 py-4 bg-white text-red-600 rounded-xl font-bold text-lg hover:bg-red-50 shadow-xl flex items-center gap-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Nouvelle réclamation
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline visuelle des périodes -->
+        <div class="mb-8 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">Couverture temporelle</h2>
+                <div class="flex gap-3 text-xs">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-3 h-3 bg-green-500 rounded"></div>
+                        <span class="text-gray-600">Soldée</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-3 h-3 bg-orange-500 rounded"></div>
+                        <span class="text-gray-600">En cours</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-3 h-3 bg-red-500 rounded"></div>
+                        <span class="text-gray-600">Non réclamée</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline horizontale -->
+            <div class="space-y-3">
+                <!-- 2023 -->
+                <div>
+                    <p class="text-xs font-medium text-gray-500 mb-2">2023</p>
+                    <div class="flex gap-1 h-8">
+                        <div class="flex-1 bg-gray-100 rounded"></div>
+                        <div class="flex-1 bg-gray-100 rounded"></div>
+                        <div class="flex-1 bg-gray-100 rounded"></div>
+                        <div class="flex-1 bg-gray-100 rounded"></div>
+                        <div class="flex-1 bg-gray-100 rounded"></div>
+                        <div class="flex-1 bg-gray-100 rounded"></div>
+                        <div class="flex-1 bg-gray-100 rounded"></div>
+                        <div class="flex-1 bg-gray-100 rounded"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Sep 2023 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Oct 2023 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Nov 2023 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Déc 2023 - Soldée"></div>
+                    </div>
+                </div>
+                
+                <!-- 2024 -->
+                <div>
+                    <p class="text-xs font-medium text-gray-500 mb-2">2024</p>
+                    <div class="flex gap-1 h-8">
+                        <div class="flex-1 bg-green-500 rounded" title="Jan 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Fév 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Mar 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Avr 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Mai 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Juin 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Juil 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Août 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Sep 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Oct 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Nov 2024 - Soldée"></div>
+                        <div class="flex-1 bg-green-500 rounded" title="Déc 2024 - Soldée"></div>
+                    </div>
+                </div>
+
+                <!-- 2025 -->
+                <div>
+                    <p class="text-xs font-medium text-gray-500 mb-2">2025</p>
+                    <div class="flex gap-1 h-8">
+                        <div class="flex-1 bg-orange-500 rounded" title="Jan 2025 - En cours"></div>
+                        <div class="flex-1 bg-orange-500 rounded" title="Fév 2025 - En cours"></div>
+                        <div class="flex-1 bg-orange-500 rounded" title="Mar 2025 - En cours"></div>
+                        <div class="flex-1 bg-orange-500 rounded" title="Avr 2025 - En cours"></div>
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Mai 2025 - NON RÉCLAMÉE"></div>
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Juin 2025 - NON RÉCLAMÉE"></div>
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Juil 2025 - NON RÉCLAMÉE"></div>
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Août 2025 - NON RÉCLAMÉE"></div>
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Sep 2025 - NON RÉCLAMÉE"></div>
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Oct 2025 - NON RÉCLAMÉE"></div>
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Nov 2025 - NON RÉCLAMÉE"></div>
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Déc 2025 - NON RÉCLAMÉE"></div>
+                    </div>
+                </div>
+
+                <!-- 2026 -->
+                <div>
+                    <p class="text-xs font-medium text-gray-500 mb-2">2026</p>
+                    <div class="flex gap-1 h-8">
+                        <div class="flex-1 bg-red-500 rounded animate-pulse" title="Jan 2026 - NON RÉCLAMÉE"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                        <div class="flex-1 bg-gray-100 rounded opacity-50"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des réclamations -->
+        <div class="space-y-4">
+            <h2 class="text-lg font-semibold text-gray-900">Réclamations actives et historique</h2>
+
+            <!-- Réclamation en cours (partiellement soldée) -->
+            <div class="bg-white rounded-xl border-2 border-orange-300 shadow-sm overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-bold text-gray-900">Réclamation #2024-003</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">
+                                    En cours
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium">Période:</span> Septembre 2023 → Décembre 2024 (16 mois)
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium">Date réclamation:</span> 15 décembre 2024
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500 mb-1">Reste à percevoir</p>
+                            <p class="text-3xl font-bold text-orange-600">2 098,19 €</p>
+                        </div>
+                    </div>
+
+                    <!-- Barre de progression -->
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between text-sm mb-2">
+                            <span class="text-gray-600">Recouvrement</span>
+                            <span class="font-semibold text-gray-900">87% (13 500 € / 15 598,19 €)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div class="bg-green-500 h-full rounded-full" style="width: 87%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Détail réclamation vs régularisations -->
+                    <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">💰 Montant réclamé</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Total calculé sur la période</p>
+                            </div>
+                            <p class="text-lg font-bold text-gray-900">15 598,19 €</p>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-3">
+                            <p class="text-sm font-medium text-gray-700 mb-2">✅ Régularisations reçues</p>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between bg-white rounded p-2">
+                                    <div>
+                                        <p class="text-sm font-medium text-green-700">Virement Alliance #VIR-2024-789</p>
+                                        <p class="text-xs text-gray-500">15 janvier 2025</p>
+                                    </div>
+                                    <p class="text-sm font-bold text-green-700">+13 500,00 €</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-3">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-semibold text-orange-700">⏳ Reste dû</p>
+                                <p class="text-lg font-bold text-orange-700">2 098,19 €</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-4 flex gap-3">
+                        <button class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            Voir courrier
+                        </button>
+                        <button class="flex-1 px-4 py-2 border border-orange-300 bg-orange-50 text-orange-700 rounded-lg text-sm font-semibold hover:bg-orange-100 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                            Relancer
+                        </button>
+                        <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Ajouter régularisation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Réclamation en attente (non soldée) -->
+            <div class="bg-white rounded-xl border-2 border-red-300 shadow-sm overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-bold text-gray-900">Réclamation #2025-001</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                    En attente
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium">Période:</span> Janvier 2025 → Avril 2025 (4 mois)
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium">Date réclamation:</span> 03 février 2025
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500 mb-1">Reste à percevoir</p>
+                            <p class="text-3xl font-bold text-red-600">2 821,82 €</p>
+                        </div>
+                    </div>
+
+                    <!-- Barre de progression -->
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between text-sm mb-2">
+                            <span class="text-gray-600">Recouvrement</span>
+                            <span class="font-semibold text-gray-900">0% (0 € / 2 821,82 €)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div class="bg-red-500 h-full rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Détail réclamation -->
+                    <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">💰 Montant réclamé</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Total calculé sur la période</p>
+                            </div>
+                            <p class="text-lg font-bold text-gray-900">2 821,82 €</p>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-3">
+                            <p class="text-sm text-gray-500 italic">Aucune régularisation reçue à ce jour</p>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-3">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-semibold text-red-700">⏳ Reste dû</p>
+                                <p class="text-lg font-bold text-red-700">2 821,82 €</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-4 flex gap-3">
+                        <button class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            Voir courrier
+                        </button>
+                        <button class="flex-1 px-4 py-2 border border-red-300 bg-red-50 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-100 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                            Relancer (37 jours)
+                        </button>
+                        <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Ajouter régularisation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Réclamation soldée (historique) -->
+            <details class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <summary class="p-6 cursor-pointer hover:bg-gray-50">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-bold text-gray-900">Réclamation #2023-012</h3>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    ✓ Soldée
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                <span class="font-medium">Période:</span> Janvier 2023 → Août 2023 (8 mois)
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500 mb-1">Réclamé & perçu</p>
+                            <p class="text-2xl font-bold text-green-600">8 456,00 €</p>
+                        </div>
+                    </div>
+                </summary>
+                <div class="px-6 pb-6 border-t border-gray-100">
+                    <div class="bg-gray-50 rounded-lg p-4 mt-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-medium text-gray-700">💰 Montant réclamé</p>
+                            <p class="text-lg font-bold text-gray-900">8 456,00 €</p>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-3">
+                            <p class="text-sm font-medium text-gray-700 mb-2">✅ Régularisations reçues</p>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between bg-white rounded p-2">
+                                    <div>
+                                        <p class="text-sm font-medium text-green-700">Virement Alliance #VIR-2023-456</p>
+                                        <p class="text-xs text-gray-500">22 septembre 2023</p>
+                                    </div>
+                                    <p class="text-sm font-bold text-green-700">+8 456,00 €</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-3">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-semibold text-green-700">✓ Soldée intégralement</p>
+                                <p class="text-lg font-bold text-green-700">0,00 €</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <!-- Alerte périodes non couvertes -->
+        <div class="mt-8 bg-red-50 border-l-4 border-red-500 rounded-lg p-6">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-red-900 mb-2">Périodes non réclamées détectées</h3>
+                    <p class="text-sm text-red-700 mb-3">
+                        Les périodes suivantes présentent des écarts mais ne font l'objet d'aucune réclamation active :
+                    </p>
+                    <div class="space-y-2">
+                        <div class="bg-white rounded-lg p-3 border border-red-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">Mai 2025 → Janvier 2026 (9 mois)</span>
+                                <span class="text-sm font-bold text-red-700">≈ 3 847,29 € estimés</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700">
+                        Créer une réclamation pour cette période
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
